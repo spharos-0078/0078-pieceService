@@ -1,4 +1,4 @@
-package com.pieceofcake.piece_service.piece.entity;
+package com.pieceofcake.piece_service.trade.entity;
 
 import com.pieceofcake.piece_service.common.entity.BaseEntity;
 import jakarta.persistence.*;

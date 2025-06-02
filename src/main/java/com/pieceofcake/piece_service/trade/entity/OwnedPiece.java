@@ -1,4 +1,4 @@
-package com.pieceofcake.piece_service.piece.entity;
+package com.pieceofcake.piece_service.trade.entity;
 
 import com.pieceofcake.piece_service.common.entity.BaseEntity;
 import jakarta.persistence.*;
@@ -6,18 +6,18 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-@Table(name = "piece_trade_history")
+@Table(name = "owned_piece")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
-public class PieceTransactionHistory extends BaseEntity {
+public class OwnedPiece extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id", nullable = false)
+    @Column(name = "id")
     private Long id;
 
-    @Column(name = "history_uuid", nullable = false, length = 50)
-    private String historyUuid;
+    @Column(name = "owned_piece_uuid", nullable = false, length = 50)
+    private String ownedPieceUuid;
 
     @Column(name = "piece_product_uuid", nullable = false, length = 50)
     private String pieceProductUuid;
@@ -25,13 +25,9 @@ public class PieceTransactionHistory extends BaseEntity {
     @Column(name = "member_uuid", nullable = false, length = 50)
     private String memberUuid;
 
-    @Column(name = "price", nullable = false)
-    private Long price;
-
     @Column(name = "piece_uuid", nullable = false, length = 50)
     private String pieceUuid;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "trade_type", nullable = false, length = 20)
-    private TradeType tradeType;
+    @Column(name = "trade_price")
+    private Long tradePrice;
 }
