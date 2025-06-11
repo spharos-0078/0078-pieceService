@@ -24,7 +24,7 @@ public class TradeServiceImpl implements TradeService {
 
         return result.stream().map(o -> {
             String pieceProductUuid = (String) o[0];
-            Integer count = (Integer) o[1];
+            Long count = (Long) o[1];
             return new GetOwnedPieceResponseDto(pieceProductUuid, count.intValue());
         }).toList();
     }
