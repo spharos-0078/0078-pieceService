@@ -1,12 +1,14 @@
+server:
+  port: 8087
+  forward-headers-strategy: framework
+
 spring:
+  config:
+    import: optional:file:.env[.properties]
   application:
     name: piece-service
-
-  DataSource:
-    url: jdbc:mysql://localhost:3306/product_db?serverTimezone=UTC&useSSL=false&allowPublicKeyRetrieval=true&rewriteBatchedStatements=true
-    username: pieceofcake_tmp
-    password: 1234
-    driver-class-name: com.mysql.cj.jdbc.Driver
+  profiles:
+    active: dev
 
   jpa:
     hibernate:
@@ -15,3 +17,11 @@ spring:
     properties:
       hibernate:
         format_sql: true
+        dialect: org.hibernate.dialect.MySQL8Dialect
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui/index.html
