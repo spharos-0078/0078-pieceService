@@ -3,6 +3,7 @@ package com.pieceofcake.piece_service.trade.entity;
 import com.pieceofcake.piece_service.common.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -41,4 +42,33 @@ public class PieceTradeReservation extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "trade_status", length = 20, nullable = false)
     private TradeStatus tradeStatus;
+
+    @Builder
+    public PieceTradeReservation(
+            Long id, String reservationUuid, String pieceProductUuid, String memberUuid,
+            Long registeredPrice, Integer desiredQuantity, Integer remainingQuantity,
+            TradeType tradeType, TradeStatus tradeStatus
+    ) {
+        this.id = id;
+        this.reservationUuid = reservationUuid;
+        this.pieceProductUuid = pieceProductUuid;
+        this.memberUuid = memberUuid;
+        this.registeredPrice = registeredPrice;
+        this.desiredQuantity = desiredQuantity;
+        this.remainingQuantity = remainingQuantity;
+        this.tradeType = tradeType;
+        this.tradeStatus = tradeStatus;
+    }
+
+    public void reduceQuantity(int quantity) {
+        this.remainingQuantity -= quantity;
+        if (this.remainingQuantity <= 0) {
+            this.remainingQuantity = 0;
+            this.tradeStatus = TradeStatus.COMPLETED;
+        }
+    }
+
+    public boolean isFullMatched() {
+        return this.remainingQuantity == 0;
+    }
 }
