@@ -7,7 +7,7 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 
 @EnableJpaAuditing
-@EnableFeignClients
+@EnableFeignClients(basePackages = "com.pieceofcake.piece_service.trade.infrastructure.feign.client")
 @EnableDiscoveryClient
 @SpringBootApplication
 public class PieceServiceApplication {
