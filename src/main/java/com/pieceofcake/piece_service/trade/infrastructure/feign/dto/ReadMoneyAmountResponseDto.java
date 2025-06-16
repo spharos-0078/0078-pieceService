@@ -6,10 +6,14 @@ import lombok.Getter;
 @Getter
 public class ReadMoneyAmountResponseDto {
 
-    private Long remainingMoney;
+    private Long amount;
 
     @Builder
-    public ReadMoneyAmountResponseDto(Long remainingMoney) {
-        this.remainingMoney = remainingMoney;
+    public ReadMoneyAmountResponseDto(Long amount) {
+        this.amount = amount;
+    }
+
+    public Long getAmount() {
+        return amount;
     }
 }

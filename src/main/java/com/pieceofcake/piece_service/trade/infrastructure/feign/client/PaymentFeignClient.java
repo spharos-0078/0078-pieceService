@@ -1,5 +1,7 @@
 package com.pieceofcake.piece_service.trade.infrastructure.feign.client;
 
+import com.pieceofcake.piece_service.common.entity.BaseResponseEntity;
+import com.pieceofcake.piece_service.trade.infrastructure.feign.dto.BaseResponse;
 import com.pieceofcake.piece_service.trade.infrastructure.feign.dto.CreateMoneyRequestFeignDto;
 import com.pieceofcake.piece_service.trade.infrastructure.feign.dto.ReadMoneyAmountResponseDto;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -18,6 +20,6 @@ public interface PaymentFeignClient {
     );
 
     @GetMapping("/payment-service/api/v1/money")
-    ReadMoneyAmountResponseDto getMoney(@RequestHeader("X-Member-Uuid") String memberUuid);
+    BaseResponse<ReadMoneyAmountResponseDto> getMoney(@RequestHeader("X-Member-Uuid") String memberUuid);
 
 }

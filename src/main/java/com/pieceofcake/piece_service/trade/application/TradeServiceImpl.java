@@ -10,6 +10,7 @@ import com.pieceofcake.piece_service.trade.infrastructure.OwnedPieceRepository;
 import com.pieceofcake.piece_service.trade.infrastructure.TradeReservationRepository;
 import com.pieceofcake.piece_service.trade.infrastructure.TradedHistoryRepository;
 import com.pieceofcake.piece_service.trade.infrastructure.feign.client.PaymentFeignClient;
+import com.pieceofcake.piece_service.trade.infrastructure.feign.dto.BaseResponse;
 import com.pieceofcake.piece_service.trade.infrastructure.feign.dto.ReadMoneyAmountResponseDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -58,10 +59,12 @@ public class TradeServiceImpl implements TradeService {
     public void createBuyReservation(String memberUuid, CreateTradeRequestDto createTradeRequestDto) {
 
         // 1. 잔액 조회 및 검증
-        ReadMoneyAmountResponseDto remainMoney = paymentFeignClient.getMoney(memberUuid);
+        BaseResponse<ReadMoneyAmountResponseDto> amount = paymentFeignClient.getMoney(memberUuid);
+        Long remainingAmount = amount.getResult().getAmount();
+
         long totalPrice = createTradeRequestDto.getRegisteredPrice() * createTradeRequestDto.getDesiredQuantity();
 
-        if(remainMoney.getRemainingMoney() < totalPrice) {
+        if(remainingAmount < totalPrice) {
             throw new IllegalArgumentException("예치금이 부족합니다.");
         }
 
