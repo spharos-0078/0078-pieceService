@@ -18,9 +18,15 @@ public class FeignConfig {
 
             if (attributes != null) {
                 HttpServletRequest request = attributes.getRequest();
+
                 String memberUuid = request.getHeader("X-Member-Uuid");
                 if (memberUuid != null && !memberUuid.isBlank()) {
                     requestTemplate.header("X-Member-Uuid", memberUuid);
+                }
+
+                String authorization = request.getHeader("Authorization");
+                if (authorization != null && !authorization.isBlank()) {
+                    requestTemplate.header("Authorization", authorization);
                 }
             }
         };
