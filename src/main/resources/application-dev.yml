@@ -1,6 +1,6 @@
 spring:
   DataSource:
-    url: jdbc:mysql://${EC2_HOST}:3306/piece_of_cake
+    url: jdbc:mysql://${EC2_DB}:3306/piece_of_cake
     username: ${SPRING_DATASOURCE_USERNAME}
     password: ${SPRING_DATASOURCE_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver

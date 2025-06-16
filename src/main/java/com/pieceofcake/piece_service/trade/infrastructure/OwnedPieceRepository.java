@@ -7,6 +7,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface OwnedPieceRepository extends JpaRepository<OwnedPiece, Long> {
@@ -17,5 +18,13 @@ public interface OwnedPieceRepository extends JpaRepository<OwnedPiece, Long> {
             "WHERE o.memberUuid = :memberUuid " +
             "GROUP BY o.pieceProductUuid")
     List<Object[]> countOwnedPiecesByMemberUuid(@Param("memberUuid") String memberUuid);
+
+    List<OwnedPiece> findByMemberUuidAndPieceProductUuid(String memberUuid, String pieceProductUuid);
+
+    Long countByMemberUuidAndPieceProductUuid(String memberUuid, String pieceProductUuid);
+
+    Optional<OwnedPiece> findByPieceUuid(String pieceUuid);
+
+    List<OwnedPiece> findByMemberUuid(String memberUuid);
 
 }

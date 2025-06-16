@@ -1,8 +1,8 @@
 spring:
   DataSource:
-    url: jdbc:mysql://localhost:3306/product_db?serverTimezone=UTC&useSSL=false&allowPublicKeyRetrieval=true&rewriteBatchedStatements=true
-    username: pieceofcake_tmp
-    password: 1234
+    url: jdbc:mysql://localhost:3306/pieceofcake_db
+    username: root
+    password: 12341234
     driver-class-name: com.mysql.cj.jdbc.Driver
 
 eureka:

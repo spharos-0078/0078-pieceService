@@ -3,6 +3,7 @@ package com.pieceofcake.piece_service.trade.entity;
 import com.pieceofcake.piece_service.common.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -30,4 +31,17 @@ public class OwnedPiece extends BaseEntity {
 
     @Column(name = "trade_price")
     private Long tradePrice;
+
+    @Builder
+    public OwnedPiece(
+            Long id, String ownedPieceUuid, String pieceProductUuid, String memberUuid,
+            String pieceUuid, Long tradePrice
+    ) {
+        this.id = id;
+        this.ownedPieceUuid = ownedPieceUuid;
+        this.pieceProductUuid = pieceProductUuid;
+        this.memberUuid = memberUuid;
+        this.pieceUuid = pieceUuid;
+        this.tradePrice = tradePrice;
+    }
 }
