@@ -9,16 +9,16 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 
-@FeignClient(name = "payment-service", url = "${EC2_HOST}:8000/payment-service/api/v1", configuration = FeignConfig.class)
+@FeignClient(name = "payment-service", url = "${EC2_HOST}:8000", configuration = FeignConfig.class)
 public interface PaymentFeignClient {
 
-    @PostMapping("/money")
+    @PostMapping("/payment-service/api/v1/money")
     void createMoney(
             @RequestHeader("X-Member-Uuid") String memberUuid,
             @RequestBody CreateMoneyRequestFeignDto createMoneyRequestFeignDto
     );
 
-    @GetMapping("/money")
+    @GetMapping("/payment-service/api/v1/money")
     ReadMoneyAmountResponseDto getMoney(@RequestHeader("X-Member-Uuid") String memberUuid);
 
 }
