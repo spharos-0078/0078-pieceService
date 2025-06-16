@@ -5,8 +5,10 @@ import com.pieceofcake.piece_service.common.entity.BaseResponseStatus;
 import com.pieceofcake.piece_service.trade.application.TradeService;
 import com.pieceofcake.piece_service.trade.dto.in.CreateTradeRequestDto;
 import com.pieceofcake.piece_service.trade.dto.out.GetAllPieceProductUuidResponseDto;
+import com.pieceofcake.piece_service.trade.dto.out.GetOwnedMemberAndPieceQuantityResponseDto;
 import com.pieceofcake.piece_service.trade.dto.out.GetOwnedPieceResponseDto;
 import com.pieceofcake.piece_service.trade.vo.in.CreateTradeRequestVo;
+import com.pieceofcake.piece_service.trade.vo.out.GetOwnedMemberAndPieceQuantityResponseVo;
 import com.pieceofcake.piece_service.trade.vo.out.GetOwnedPieceResponseVo;
 import com.pieceofcake.piece_service.trade.vo.out.GetAllPieceProductUuidResponseVo;
 import io.swagger.v3.oas.annotations.Operation;
@@ -21,6 +23,15 @@ import java.util.List;
 public class TradeController {
 
     private final TradeService tradeService;
+
+    @Operation(summary = "상품별 소유자, 보유조각 전체 조회")
+    @GetMapping("/owned/{pieceProductUuid}/list")
+    public BaseResponseEntity<List<GetOwnedMemberAndPieceQuantityResponseVo>> getOwnedMemberAndQuantity(
+            @PathVariable String pieceProductUuid
+    ) {
+        return new BaseResponseEntity<>(tradeService.getOwnedMemberAndQuantity(pieceProductUuid)
+                .stream().map(GetOwnedMemberAndPieceQuantityResponseDto::toVo).toList());
+    }
 
     @Operation(summary = "멤버별 보유조각 전체 조회")
     @GetMapping("/mypage/owned/list")

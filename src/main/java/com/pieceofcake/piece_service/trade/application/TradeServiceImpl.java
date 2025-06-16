@@ -3,6 +3,7 @@ package com.pieceofcake.piece_service.trade.application;
 import com.pieceofcake.piece_service.piece.infrastructure.PieceRepository;
 import com.pieceofcake.piece_service.trade.dto.in.CreateTradeRequestDto;
 import com.pieceofcake.piece_service.trade.dto.out.GetAllPieceProductUuidResponseDto;
+import com.pieceofcake.piece_service.trade.dto.out.GetOwnedMemberAndPieceQuantityResponseDto;
 import com.pieceofcake.piece_service.trade.dto.out.GetOwnedPieceResponseDto;
 import com.pieceofcake.piece_service.trade.entity.OwnedPiece;
 import com.pieceofcake.piece_service.trade.entity.PieceTradeReservation;
@@ -28,6 +29,17 @@ public class TradeServiceImpl implements TradeService {
     private final PaymentFeignClient paymentFeignClient;
     private final PieceRepository pieceRepository;
     private final MatchingService matchingService;
+
+    @Override
+    public List<GetOwnedMemberAndPieceQuantityResponseDto> getOwnedMemberAndQuantity(String pieceProductUuid) {
+        List<Object[]> result = ownedPieceRepository.countOwnedMemberUuidAndQuantityByPieceProductUuid(pieceProductUuid);
+
+        return result.stream().map(o -> {
+            String memberUuid = (String) o[0];
+            Long count = (Long) o[1];
+            return new GetOwnedMemberAndPieceQuantityResponseDto(memberUuid, count.intValue());
+        }).toList();
+    }
 
     @Override
     public List<GetOwnedPieceResponseDto> getOwnedPieceByMemberUuid(String memberUuid) {
