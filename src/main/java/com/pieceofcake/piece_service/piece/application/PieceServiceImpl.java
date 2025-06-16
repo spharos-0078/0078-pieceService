@@ -32,4 +32,18 @@ public class PieceServiceImpl implements PieceService {
 
         pieceJdbcRepository.savePieces(pieces);
     }
+
+    @Override
+    @Transactional
+    public void createPieceJpa(CreatePieceRequestDto createPieceRequestDto) {
+        List<Piece> pieces = IntStream.rangeClosed(1, createPieceRequestDto.getTotalPieces())
+                .mapToObj(i -> Piece.builder()
+                        .pieceUuid(UUID.randomUUID().toString())
+                        .serialNumber(i)
+                        .productUuid(createPieceRequestDto.getProductUuid())
+                        .build())
+                .toList();
+
+        pieceRepository.saveAll(pieces);
+    }
 }

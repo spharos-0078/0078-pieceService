@@ -79,15 +79,16 @@ public enum BaseResponseStatus {
     NO_EXIST_OPTION(HttpStatus.NOT_FOUND, false, 3002, "존재하지 않는 옵션입니다"),
     NO_EXIST_CATEGORY(HttpStatus.NOT_FOUND, false, 3003, "존재하지 않는 카테고리입니다"),
     NO_EXIST_PRODUCT_CATEGORY(HttpStatus.NOT_FOUND, false, 3004, "존재하지 않는 상품 카테고리입니다"),
+    NO_EXIST_PIECE_PRODUCT(HttpStatus.NOT_FOUND, false, 3005, "존재하지 않는 조각상품입니다"),
 
-    DUPLICATED_PRODUCT(HttpStatus.CONFLICT, false, 3005, "이미 등록된 상품입니다"),
-    DUPLICATED_OPTION(HttpStatus.CONFLICT, false, 3006, "이미 등록된 옵션입니다"),
-    DUPLICATED_CATEGORY(HttpStatus.CONFLICT, false, 3007, "이미 등록된 카테고리입니다"),
-    DUPLICATED_RESTOCK_NOTIFICATION(HttpStatus.CONFLICT, false, 3008, "이미 재입고 알림 신청이 완료 되었습니다"),
-    INVALID_RESTOCK_NOTIFICATION_CONDITION(HttpStatus.BAD_REQUEST, false, 3009, "재입고 알림은 품절 상품에만 신청할 수 있습니다."),
+    DUPLICATED_PRODUCT(HttpStatus.CONFLICT, false, 3006, "이미 등록된 상품입니다"),
+    DUPLICATED_OPTION(HttpStatus.CONFLICT, false, 3007, "이미 등록된 옵션입니다"),
+    DUPLICATED_CATEGORY(HttpStatus.CONFLICT, false, 3008, "이미 등록된 카테고리입니다"),
+    DUPLICATED_RESTOCK_NOTIFICATION(HttpStatus.CONFLICT, false, 3009, "이미 재입고 알림 신청이 완료 되었습니다"),
+    INVALID_RESTOCK_NOTIFICATION_CONDITION(HttpStatus.BAD_REQUEST, false, 3010, "재입고 알림은 품절 상품에만 신청할 수 있습니다."),
 
-    NO_EXIST_OPTIONS_IN_PRODUCT(HttpStatus.NOT_FOUND, false, 3010, "해당 상품에 옵션이 존재하지 않습니다"),
-    NOT_ENOUGH_STOCK(HttpStatus.CONFLICT, false, 3011, "해당 상품에 재고가 충분하지 않습니다"),
+    NO_EXIST_OPTIONS_IN_PRODUCT(HttpStatus.NOT_FOUND, false, 3011, "해당 상품에 옵션이 존재하지 않습니다"),
+    NOT_ENOUGH_STOCK(HttpStatus.CONFLICT, false, 3012, "해당 상품에 재고가 충분하지 않습니다"),
 
     // Cart
     CART_PRODUCT_KIND_LIMIT_EXCEEDED(HttpStatus.BAD_REQUEST, false, 3100, "장바구니에 담을 수 있는 상품 종류는 최대 20개까지입니다"),
