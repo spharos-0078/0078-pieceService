@@ -56,4 +56,10 @@ public class PieceServiceImpl implements PieceService {
             ownedPieces.forEach(piece -> piece.changeAssignStatusToMember(null));
         }
     }
+
+    @Transactional
+    @Override
+    public void deleteAllPieces(String productUuid) {
+        pieceJdbcRepository.deletePiecesByProductUuid(productUuid);
+    }
 }
