@@ -4,12 +4,12 @@ import com.pieceofcake.piece_service.common.entity.BaseResponseEntity;
 import com.pieceofcake.piece_service.common.entity.BaseResponseStatus;
 import com.pieceofcake.piece_service.piece.application.PieceServiceImpl;
 import com.pieceofcake.piece_service.piece.dto.in.CreatePieceRequestDto;
+import com.pieceofcake.piece_service.piece.dto.in.DistributePieceRequestDto;
 import com.pieceofcake.piece_service.piece.vo.in.CreatePieceRequestVo;
+import com.pieceofcake.piece_service.piece.vo.in.DistributePieceRequestVo;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RequestMapping("api/v1/piece")
 @RequiredArgsConstructor
@@ -21,6 +21,16 @@ public class PieceController {
     @PostMapping
     public BaseResponseEntity<Void> createPieces(@RequestBody CreatePieceRequestVo createPieceRequestVo) {
         pieceService.createPiece(CreatePieceRequestDto.from(createPieceRequestVo));
+        return new BaseResponseEntity<>(BaseResponseStatus.SUCCESS);
+    }
+
+    @Operation(summary = "조각 분배 신청")
+    @PostMapping("/distribute")
+    public BaseResponseEntity<Void> distributePiece(
+            @RequestHeader(value = "X-Member-Uuid") String memberUuid,
+            @RequestBody DistributePieceRequestVo distributePieceRequestVo
+    ) {
+        pieceService.distributePiece(DistributePieceRequestDto.of(memberUuid, distributePieceRequestVo));
         return new BaseResponseEntity<>(BaseResponseStatus.SUCCESS);
     }
 }
