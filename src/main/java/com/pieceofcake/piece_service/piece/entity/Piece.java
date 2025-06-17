@@ -2,10 +2,7 @@ package com.pieceofcake.piece_service.piece.entity;
 
 import com.pieceofcake.piece_service.common.entity.BaseEntity;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Table(name = "piece")
 @Getter
@@ -35,6 +32,10 @@ public class Piece extends BaseEntity {
         this.pieceUuid = pieceUuid;
         this.serialNumber = serialNumber;
         this.productUuid = productUuid;
+        this.memberUuid = memberUuid;
+    }
+
+    public void changeAssignStatusToMember(String memberUuid){
         this.memberUuid = memberUuid;
     }
 }
