@@ -26,7 +26,7 @@ public class PieceController {
     }
 
     @Operation(summary = "조각 분배 신청")
-    @PostMapping("/distribute")
+    @PutMapping("/distribute")
     public BaseResponseEntity<Void> distributePiece(
             @RequestHeader(value = "X-Member-Uuid") String memberUuid,
             @RequestBody DistributePieceRequestVo distributePieceRequestVo
