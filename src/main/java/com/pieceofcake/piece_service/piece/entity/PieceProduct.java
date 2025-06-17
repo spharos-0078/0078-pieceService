@@ -2,13 +2,13 @@ package com.pieceofcake.piece_service.piece.entity;
 
 import com.pieceofcake.piece_service.common.entity.BaseEntity;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 
+@Builder
 @Table(name = "piece_product")
 @Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+//@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 public class PieceProduct extends BaseEntity {
     @Id
@@ -19,12 +19,17 @@ public class PieceProduct extends BaseEntity {
     @Column(name = "piece_product_uuid", nullable = false, length = 50)
     private String pieceProductUuid;
 
-    @Column(name = "product_uuid", nullable = false,length = 50)
+    @Column(name = "product_uuid", nullable = false, length = 50)
     private String productUuid;
 
     @Column(name = "market_price")
     private Long marketPrice;
 
-    @Column(name = "total_pieces")
-    private Integer totalPieces;
+    @Builder.Default
+    @Column(name = "is_trading", nullable = false)
+    Boolean isTrading = false;
+
+    @Builder.Default
+    @Column(name = "is_deleted", nullable = false)
+    Boolean isDeleted = false;
 }

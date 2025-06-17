@@ -55,6 +55,5 @@ public class PieceServiceImpl implements PieceService {
 
             ownedPieces.forEach(piece -> piece.changeAssignStatusToMember(null));
         }
-
     }
 }
