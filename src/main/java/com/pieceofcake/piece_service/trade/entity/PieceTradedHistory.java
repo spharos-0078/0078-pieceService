@@ -36,11 +36,12 @@ public class PieceTradedHistory extends BaseEntity {
     @Column(name = "trade_type", nullable = false, length = 20)
     private TradeType tradeType;
 
+    @Column(name = "quantity", nullable = false)
+    private Integer quantity;
+
     @Builder
-    public PieceTradedHistory(
-            Long id, String historyUuid, String pieceProductUuid, String memberUuid,
-            Long price, String pieceUuid, TradeType tradeType
-    ) {
+    public PieceTradedHistory(Long id, String historyUuid, String pieceProductUuid, String memberUuid, Long price,
+                              String pieceUuid, TradeType tradeType, Integer quantity) {
         this.id = id;
         this.historyUuid = historyUuid;
         this.pieceProductUuid = pieceProductUuid;
@@ -48,5 +49,6 @@ public class PieceTradedHistory extends BaseEntity {
         this.price = price;
         this.pieceUuid = pieceUuid;
         this.tradeType = tradeType;
+        this.quantity = quantity;
     }
 }

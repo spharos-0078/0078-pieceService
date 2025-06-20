@@ -9,6 +9,7 @@ import com.pieceofcake.piece_service.piece.dto.in.UpdatePieceProductRequestDto;
 import com.pieceofcake.piece_service.piece.vo.in.CreatePieceProductRequestVo;
 import com.pieceofcake.piece_service.piece.vo.in.UpdatePieceProductRequestVo;
 import com.pieceofcake.piece_service.piece.vo.out.GetPieceProductUuidListResponseVo;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,24 +20,28 @@ public class PieceProductController {
 
     private final PieceProductServiceImpl pieceProductService;
 
+    @Operation(summary = "조각 상품 생성")
     @PostMapping
     public BaseResponseEntity<Void> createPieceProduct(@RequestBody CreatePieceProductRequestVo createPieceProductRequestVo) {
         pieceProductService.createPieceProduct(CreatePieceProductRequestDto.from(createPieceProductRequestVo));
         return new BaseResponseEntity<>(BaseResponseStatus.SUCCESS);
     }
 
+    @Operation(summary = "조각 상품 수정")
     @PutMapping
     public BaseResponseEntity<Void> updatePieceProduct(@RequestBody UpdatePieceProductRequestVo updatePieceProductRequestVo) {
         pieceProductService.updatePieceProduct(UpdatePieceProductRequestDto.from(updatePieceProductRequestVo));
         return new BaseResponseEntity<>(BaseResponseStatus.SUCCESS);
     }
 
+    @Operation(summary = "조각 상품 삭제")
     @DeleteMapping("/{pieceProductUuid}")
     public BaseResponseEntity<Void> deletePieceProduct(@PathVariable String pieceProductUuid) {
         pieceProductService.deletePieceProduct(pieceProductUuid);
         return new BaseResponseEntity<>(BaseResponseStatus.SUCCESS);
     }
 
+    @Operation(summary = "조각 상품 uuid list 조회")
     @GetMapping("/uuid-list")
     public BaseResponseEntity<GetPieceProductUuidListResponseVo> getPieceProductUuidList(
             @RequestParam(defaultValue = "0") int page,
