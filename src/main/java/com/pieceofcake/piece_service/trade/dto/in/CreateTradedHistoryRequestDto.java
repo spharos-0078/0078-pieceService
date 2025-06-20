@@ -11,42 +11,43 @@ import java.util.UUID;
 @Getter
 public class CreateTradedHistoryRequestDto {
 
+    private String matchedUuid;
     private String pieceProductUuid;
     private String pieceUuid;
-    private Long price;
+    private Long piecePrice;
     private TradeType tradeType;
     private String memberUuid;
 
     @Builder
     public CreateTradedHistoryRequestDto(
-            String pieceProductUuid, String pieceUuid,
-            Long price, TradeType tradeType, String memberUuid
+            String matchedUuid, String pieceProductUuid, String pieceUuid,
+            Long piecePrice, TradeType tradeType, String memberUuid
     ) {
+        this.matchedUuid = matchedUuid;
         this.pieceProductUuid = pieceProductUuid;
         this.pieceUuid = pieceUuid;
-        this.price = price;
+        this.piecePrice = piecePrice;
         this.tradeType = tradeType;
         this.memberUuid = memberUuid;
     }
 
     public static CreateTradedHistoryRequestDto of(PieceTradeReservation reservation, String pieceUuid, TradeType tradeType, String memberUuid) {
-        return CreateTradedHistoryRequestDto.builder()
+        return builder()
+                .matchedUuid(null)
                 .pieceProductUuid(reservation.getPieceProductUuid())
                 .pieceUuid(pieceUuid)
-                .price(reservation.getRegisteredPrice())
+                .piecePrice(reservation.getRegisteredPrice())
                 .tradeType(tradeType)
                 .memberUuid(memberUuid)
                 .build();
     }
 
-    public PieceTradedHistory toEntity() {
-        return PieceTradedHistory.builder()
-                .historyUuid(UUID.randomUUID().toString().substring(0, 32))
-                .pieceProductUuid(pieceProductUuid)
-                .pieceUuid(pieceUuid)
-                .price(price)
-                .tradeType(tradeType)
-                .memberUuid(memberUuid)
-                .build();
-    }
+        public PieceTradedHistory toEntity() {
+            return PieceTradedHistory.builder()
+                    .matchedUuid(matchedUuid != null ? matchedUuid : UUID.randomUUID().toString().substring(0, 32))
+                    .pieceUuid(pieceUuid)
+                    .tradeType(tradeType)
+                    .memberUuid(memberUuid)
+                    .build();
+        }
 }
