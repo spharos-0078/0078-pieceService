@@ -17,38 +17,28 @@ public class PieceTradedHistory extends BaseEntity {
     @Column(name = "id", nullable = false)
     private Long id;
 
-    @Column(name = "history_uuid", nullable = false, length = 50)
-    private String historyUuid;
-
-    @Column(name = "piece_product_uuid", nullable = false, length = 50)
-    private String pieceProductUuid;
+    @Column(name = "matched_uuid", nullable = false)
+    private String matchedUuid;
 
     @Column(name = "member_uuid", nullable = false, length = 50)
     private String memberUuid;
 
-    @Column(name = "price", nullable = false)
-    private Long price;
-
-    @Column(name = "piece_uuid", nullable = false, length = 50)
+    @Column(name = "piece_uuid", nullable = false)
     private String pieceUuid;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "trade_type", nullable = false, length = 20)
     private TradeType tradeType;
 
-    @Column(name = "quantity", nullable = false)
-    private Integer quantity;
-
     @Builder
-    public PieceTradedHistory(Long id, String historyUuid, String pieceProductUuid, String memberUuid, Long price,
-                              String pieceUuid, TradeType tradeType, Integer quantity) {
+    public PieceTradedHistory(
+            Long id, String matchedUuid, String memberUuid,
+            String pieceUuid, TradeType tradeType
+    ) {
         this.id = id;
-        this.historyUuid = historyUuid;
-        this.pieceProductUuid = pieceProductUuid;
+        this.matchedUuid = matchedUuid;
         this.memberUuid = memberUuid;
-        this.price = price;
         this.pieceUuid = pieceUuid;
         this.tradeType = tradeType;
-        this.quantity = quantity;
     }
 }
