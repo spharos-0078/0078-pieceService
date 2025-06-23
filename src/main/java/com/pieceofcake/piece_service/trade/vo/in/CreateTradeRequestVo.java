@@ -11,21 +11,21 @@ public class CreateTradeRequestVo {
     private String pieceProductUuid;
     private Long registeredPrice;
     private Integer desiredQuantity;
-    private TradeType tradeType;
-
-    private Integer remainingQuantity;
-    private TradeStatus tradeStatus;
+//    private TradeType tradeType;
+//
+//    private Integer remainingQuantity;
+//    private TradeStatus tradeStatus;
 
     @Builder
     public CreateTradeRequestVo(
-            String pieceProductUuid, Long registeredPrice, Integer desiredQuantity,
-            TradeType tradeType, Integer remainingQuantity, TradeStatus tradeStatus
+            String pieceProductUuid, Long registeredPrice, Integer desiredQuantity
+//            TradeType tradeType, Integer remainingQuantity, TradeStatus tradeStatus
     ) {
         this.pieceProductUuid = pieceProductUuid;
         this.registeredPrice = registeredPrice;
         this.desiredQuantity = desiredQuantity;
-        this.tradeType = tradeType;
-        this.remainingQuantity = remainingQuantity;
-        this.tradeStatus = tradeStatus;
+//        this.tradeType = tradeType;
+//        this.remainingQuantity = remainingQuantity;
+//        this.tradeStatus = tradeStatus;
     }
 }
