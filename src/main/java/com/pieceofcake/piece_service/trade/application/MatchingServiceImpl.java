@@ -1,6 +1,7 @@
 package com.pieceofcake.piece_service.trade.application;
 
 import com.pieceofcake.piece_service.piece.infrastructure.PieceRepository;
+import com.pieceofcake.piece_service.trade.dto.in.CreateMatchedHistoryRequestDto;
 import com.pieceofcake.piece_service.trade.dto.in.CreateTradedHistoryRequestDto;
 import com.pieceofcake.piece_service.trade.dto.in.TransferPieceOwnershipRequestDto;
 import com.pieceofcake.piece_service.trade.entity.*;
@@ -10,6 +11,7 @@ import com.pieceofcake.piece_service.trade.infrastructure.TradeReservationReposi
 import com.pieceofcake.piece_service.trade.infrastructure.TradedHistoryRepository;
 import com.pieceofcake.piece_service.trade.infrastructure.feign.client.PaymentFeignClient;
 import com.pieceofcake.piece_service.trade.infrastructure.feign.dto.CreateMoneyRequestFeignDto;
+import com.pieceofcake.piece_service.trade.infrastructure.redis.RedisPublisher;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,6 +31,8 @@ public class MatchingServiceImpl implements MatchingService {
     private final PaymentFeignClient paymentFeignClient;
     private final PieceRepository pieceRepository;
     private final PieceMatchedHistoryRepository pieceMatchedHistoryRepository;
+
+    private final RedisPublisher redisPublisher;
 
     /* ============================================================================
        1. 외부에서 호출되는 진입 메서드 – ‘주문 1건’이 들어오면 즉시 매칭 시도
@@ -134,8 +138,6 @@ public class MatchingServiceImpl implements MatchingService {
             saveTradeHistory(buy, sell, piece, matchedUuid);
         }
 
-        // todo: 체결 시 Redis로 체결 내역 전달
-
         /* 3-3. 예치금 정산 (총 가격 = 체결가 × 체결 수량) */
         long totalPrice = matchQuantity * piecePrice;
 
@@ -147,6 +149,10 @@ public class MatchingServiceImpl implements MatchingService {
         sell.reduceQuantity(matchQuantity);
         tradeReservationRepository.save(sell);
         tradeReservationRepository.save(buy);
+
+        // 3-5. Redis로 호가창 데이터 전송 (가격 기준 수량 누적)
+        redisPublisher.publishOrderBook(buy.getPieceProductUuid(), piecePrice, matchQuantity, TradeType.BUY.name());
+        redisPublisher.publishOrderBook(sell.getPieceProductUuid(), piecePrice, matchQuantity, TradeType.SELL.name());
     }
 
     /** 보유 조각 소유권 이전 */
@@ -166,17 +172,16 @@ public class MatchingServiceImpl implements MatchingService {
                 sell, piece.getPieceUuid(), TradeType.SELL, sell.getMemberUuid()).toEntity());
     }
 
-    private void saveMatchedHistory(PieceTradeReservation reservation, String matchedUuid, long price, int qty) {
-        PieceMatchedHistory matched = PieceMatchedHistory.builder()
-                .matchedUuid(matchedUuid)
-                .pieceProductUuid(reservation.getPieceProductUuid())
-                .piecePrice(price)
-                .matchedQuantity(qty)
-                .matchedTime(LocalDateTime.now())
-                .memberUuid(reservation.getMemberUuid())
-                .tradeType(reservation.getTradeType())
-                .build();
-        pieceMatchedHistoryRepository.save(matched);
+    private void saveMatchedHistory(PieceTradeReservation reservation, String matchedUuid, long piecePrice, int matchedQuantity) {
+        CreateMatchedHistoryRequestDto matchedDto = CreateMatchedHistoryRequestDto.of(
+                reservation, matchedUuid, piecePrice,
+                matchedQuantity, reservation.getMemberUuid(), reservation.getTradeType()
+        );
+
+        pieceMatchedHistoryRepository.save(matchedDto.toEntity());
+
+        // 거래량 집계용 Redis 전송
+        redisPublisher.publishTradeVolume(reservation.getPieceProductUuid(), piecePrice, matchedQuantity, LocalDateTime.now());
     }
 
     /** 가능한 체결 수량 = 두 주문의 ‘남은 수량’ 중 더 작은 값 */
