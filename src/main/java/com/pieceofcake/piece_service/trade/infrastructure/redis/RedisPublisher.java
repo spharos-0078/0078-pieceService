@@ -26,7 +26,7 @@ public class RedisPublisher {
         String date = matchedTime.toLocalDate().toString(); // key에 날짜 기준 사용
         String formattedTime = matchedTime.format(TIME_FORMATTER); // ex. 2025-06-20 14:22:51
 
-        String key = String.format("volume:%s:%s", pieceProductUuid, date);
+        String key = String.format("pieceVolume:%s:%s", pieceProductUuid, date);
         String value = String.format(
                 "{\"piecePrice\":%d,\"matchedQuantity\":%d,\"matchedTime\":\"%s\"}",
                 piecePrice, matchedQuantity, formattedTime
@@ -43,7 +43,7 @@ public class RedisPublisher {
      * @param tradeType BUY 또는 SELL
      */
     public void publishOrderBook(String pieceProductUuid, long price, int quantity, String tradeType) {
-        String key = String.format("orderbook:%s:%s", pieceProductUuid, tradeType.toLowerCase());
+        String key = String.format("pieceOrderbook:%s:%s", pieceProductUuid, tradeType.toLowerCase());
         redisTemplate.opsForHash().increment(key, String.valueOf(price), quantity);
     }
 
