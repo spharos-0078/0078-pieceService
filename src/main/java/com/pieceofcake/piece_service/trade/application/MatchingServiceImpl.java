@@ -108,7 +108,7 @@ public class MatchingServiceImpl implements MatchingService {
             long piecePrice = isBuy ? counter.getRegisteredPrice() : reservation.getRegisteredPrice();
 
             String matchedUuid = UUID.randomUUID().toString().substring(0, 32);
-            saveMatchedHistory(reservation, matchedUuid, piecePrice, qty);
+            saveMatchedHistory(reservation, counter, matchedUuid, piecePrice, qty);
 
             // ④ 체결 실행
             if (isBuy) {
@@ -172,13 +172,35 @@ public class MatchingServiceImpl implements MatchingService {
                 sell, piece.getPieceUuid(), TradeType.SELL, sell.getMemberUuid()).toEntity());
     }
 
-    private void saveMatchedHistory(PieceTradeReservation reservation, String matchedUuid, long piecePrice, int matchedQuantity) {
-        CreateMatchedHistoryRequestDto matchedDto = CreateMatchedHistoryRequestDto.of(
-                reservation, matchedUuid, piecePrice,
-                matchedQuantity, reservation.getMemberUuid(), reservation.getTradeType()
+    private void saveMatchedHistory(
+            PieceTradeReservation reservation, PieceTradeReservation counter,
+            String matchedUuid, long piecePrice, int matchedQuantity
+    ) {
+        PieceTradeReservation buyReservation;
+        PieceTradeReservation sellReservation;
+
+        if (reservation.getTradeType().equals(TradeType.BUY)) {
+            buyReservation = reservation;
+            sellReservation = counter;
+        } else {
+            buyReservation = counter;
+            sellReservation = reservation;
+        }
+
+        CreateMatchedHistoryRequestDto buyDto = CreateMatchedHistoryRequestDto.of(
+                buyReservation, matchedUuid, piecePrice, matchedQuantity,
+                buyReservation.getMemberUuid(), TradeType.BUY
         );
 
-        pieceMatchedHistoryRepository.save(matchedDto.toEntity());
+        // 매도자 기록
+        CreateMatchedHistoryRequestDto sellDto = CreateMatchedHistoryRequestDto.of(
+                sellReservation, matchedUuid, piecePrice, matchedQuantity,
+                sellReservation.getMemberUuid(), TradeType.SELL
+        );
+
+        pieceMatchedHistoryRepository.save(buyDto.toEntity());
+        pieceMatchedHistoryRepository.save(sellDto.toEntity());
+
 
         // 거래량 집계용 Redis 전송
         redisPublisher.publishTradeVolume(reservation.getPieceProductUuid(), piecePrice, matchedQuantity, LocalDateTime.now());
