@@ -44,6 +44,13 @@ public class CreateMoneyRequestFeignDto {
                 .amount(totalPrice)
                 .isPositive(false)
                 .historyType("FRACTION_BUY")
+                .moneyHistoryDetail("조각 매수")
+                .bankName("")
+                .accountNumber("")
+                .accountHolderName("")
+                .paymentUuid("")
+                .paymentMethod("")
+                .paymentStatus("")
                 .build();
     }
 
@@ -52,6 +59,13 @@ public class CreateMoneyRequestFeignDto {
                 .amount(totalPrice)
                 .isPositive(true)
                 .historyType("FRACTION_SELL")
+                .moneyHistoryDetail("조각 매도")
+                .bankName("")
+                .accountNumber("")
+                .accountHolderName("")
+                .paymentUuid("")
+                .paymentMethod("")
+                .paymentStatus("")
                 .build();
     }
 
