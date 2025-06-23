@@ -6,8 +6,8 @@ import lombok.Getter;
 import java.util.List;
 
 @Getter
-public class GetTradedHistoryListPageResponseVo {
-    private List<GetTradedHistoryListResponseVo> tradeHistoryResponseVoList;
+public class GetMatchedHistoryListPageResponseVo {
+    private List<GetMatchedHistoryListResponseVo> tradeHistoryResponseVoList;
     private long page;
     private long size;
     private boolean hasNext;
@@ -15,8 +15,8 @@ public class GetTradedHistoryListPageResponseVo {
     private long totalElements;
 
     @Builder
-    public GetTradedHistoryListPageResponseVo(List<GetTradedHistoryListResponseVo> tradeHistoryResponseVoList, long page,
-                                              long size, boolean hasNext, long totalPage, long totalElements) {
+    public GetMatchedHistoryListPageResponseVo(List<GetMatchedHistoryListResponseVo> tradeHistoryResponseVoList, long page,
+                                               long size, boolean hasNext, long totalPage, long totalElements) {
         this.tradeHistoryResponseVoList = tradeHistoryResponseVoList;
         this.page = page;
         this.size = size;

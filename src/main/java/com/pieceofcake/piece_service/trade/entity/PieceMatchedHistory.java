@@ -25,10 +25,10 @@ public class PieceMatchedHistory extends BaseEntity {
     @Column(name = "piece_product_uuid", nullable = false)
     private String pieceProductUuid;
 
-    @Column(name = "price", nullable = false)
+    @Column(name = "piece_price", nullable = false)
     private Long piecePrice;
 
-    @Column(name = "price", nullable = false)
+    @Column(name = "matched_quantity", nullable = false)
     private Integer matchedQuantity;
 
     @Column(name = "matched_time", nullable = false)

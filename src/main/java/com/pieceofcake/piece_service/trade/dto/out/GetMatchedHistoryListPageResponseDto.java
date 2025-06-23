@@ -1,7 +1,7 @@
 package com.pieceofcake.piece_service.trade.dto.out;
 
-import com.pieceofcake.piece_service.trade.dto.in.GetTradedHistoryListRequestDto;
-import com.pieceofcake.piece_service.trade.vo.out.GetTradedHistoryListPageResponseVo;
+import com.pieceofcake.piece_service.trade.entity.PieceMatchedHistory;
+import com.pieceofcake.piece_service.trade.vo.out.GetMatchedHistoryListPageResponseVo;
 import lombok.Builder;
 import lombok.Getter;
 import org.springframework.data.domain.Page;
@@ -9,8 +9,8 @@ import org.springframework.data.domain.Page;
 import java.util.List;
 
 @Getter
-public class GetTradedHistoryListPageResponseDto {
-    private List<GetTradedHistoryListResponseDto> tradeHistoryResponseDtoList;
+public class GetMatchedHistoryListPageResponseDto {
+    private List<GetMatchedHistoryListResponseDto> tradeHistoryResponseDtoList;
     private long page;
     private long size;
     private boolean hasNext;
@@ -18,8 +18,8 @@ public class GetTradedHistoryListPageResponseDto {
     private long totalElements;
 
     @Builder
-    public GetTradedHistoryListPageResponseDto(List<GetTradedHistoryListResponseDto> tradeHistoryResponseDtoList, long page,
-                                               long size, boolean hasNext, long totalPage, long totalElements) {
+    public GetMatchedHistoryListPageResponseDto(List<GetMatchedHistoryListResponseDto> tradeHistoryResponseDtoList, long page,
+                                                long size, boolean hasNext, long totalPage, long totalElements) {
         this.tradeHistoryResponseDtoList = tradeHistoryResponseDtoList;
         this.page = page;
         this.size = size;
@@ -28,9 +28,10 @@ public class GetTradedHistoryListPageResponseDto {
         this.totalElements = totalElements;
     }
 
-    public static GetTradedHistoryListPageResponseDto from(Page<GetTradedHistoryListResponseDto> page) {
-        return GetTradedHistoryListPageResponseDto.builder()
-                .tradeHistoryResponseDtoList(page.getContent())
+    public static GetMatchedHistoryListPageResponseDto from(Page<PieceMatchedHistory> page) {
+        return GetMatchedHistoryListPageResponseDto.builder()
+                .tradeHistoryResponseDtoList(page.getContent().stream()
+                        .map(GetMatchedHistoryListResponseDto::from).toList())
                 .page(page.getNumber())
                 .size(page.getSize())
                 .hasNext(page.hasNext())
@@ -40,11 +41,11 @@ public class GetTradedHistoryListPageResponseDto {
     }
 
 
-    public GetTradedHistoryListPageResponseVo toVo() {
-        return GetTradedHistoryListPageResponseVo.builder()
+    public GetMatchedHistoryListPageResponseVo toVo() {
+        return GetMatchedHistoryListPageResponseVo.builder()
                 .tradeHistoryResponseVoList(tradeHistoryResponseDtoList
                         .stream()
-                        .map(GetTradedHistoryListResponseDto::toVo)
+                        .map(GetMatchedHistoryListResponseDto::toVo)
                         .toList())
                 .page(page)
                 .size(size)
