@@ -11,7 +11,7 @@ import java.util.UUID;
 @Getter
 public class CreateTradedHistoryRequestDto {
 
-    private String matchedUuid;
+    private static String matchedUuid;
     private String pieceProductUuid;
     private String pieceUuid;
     private Long piecePrice;
@@ -31,9 +31,11 @@ public class CreateTradedHistoryRequestDto {
         this.memberUuid = memberUuid;
     }
 
-    public static CreateTradedHistoryRequestDto of(PieceTradeReservation reservation, String pieceUuid, TradeType tradeType, String memberUuid) {
-        return builder()
-                .matchedUuid(null)
+    public static CreateTradedHistoryRequestDto of(
+            PieceTradeReservation reservation, String pieceUuid, TradeType tradeType, String memberUuid
+    ) {
+        return CreateTradedHistoryRequestDto.builder()
+                .matchedUuid(matchedUuid)
                 .pieceProductUuid(reservation.getPieceProductUuid())
                 .pieceUuid(pieceUuid)
                 .piecePrice(reservation.getRegisteredPrice())
