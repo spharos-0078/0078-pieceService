@@ -7,4 +7,6 @@ public interface PieceService {
     void createPiece(CreatePieceRequestDto createPieceRequestDto);
 
     void distributePiece(DistributePieceRequestDto distributePieceRequestDto);
+
+    void deleteAllPieces(String productUuid);
 }

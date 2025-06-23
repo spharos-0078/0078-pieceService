@@ -18,6 +18,7 @@ public class PieceController {
 
     private final PieceServiceImpl pieceService;
 
+    @Operation(summary = "조각 생성")
     @PostMapping
     public BaseResponseEntity<Void> createPieces(@RequestBody CreatePieceRequestVo createPieceRequestVo) {
         pieceService.createPiece(CreatePieceRequestDto.from(createPieceRequestVo));
@@ -25,12 +26,19 @@ public class PieceController {
     }
 
     @Operation(summary = "조각 분배 신청")
-    @PostMapping("/distribute")
+    @PutMapping("/distribute")
     public BaseResponseEntity<Void> distributePiece(
             @RequestHeader(value = "X-Member-Uuid") String memberUuid,
             @RequestBody DistributePieceRequestVo distributePieceRequestVo
     ) {
         pieceService.distributePiece(DistributePieceRequestDto.of(memberUuid, distributePieceRequestVo));
+        return new BaseResponseEntity<>(BaseResponseStatus.SUCCESS);
+    }
+
+    @Operation(summary = "조각 전체 삭제")
+    @DeleteMapping("/delete-all/{productUuid}")
+    public BaseResponseEntity<Void> deleteAllPieces(@PathVariable String productUuid) {
+        pieceService.deleteAllPieces(productUuid);
         return new BaseResponseEntity<>(BaseResponseStatus.SUCCESS);
     }
 }

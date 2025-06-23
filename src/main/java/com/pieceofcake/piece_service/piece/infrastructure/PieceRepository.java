@@ -19,4 +19,6 @@ public interface PieceRepository extends JpaRepository<Piece, Long> {
     List<Piece> findTopNByProductUuidAndMemberUuidIsNull(@Param("productUuid") String productUuid, Pageable pageable);
 
     List<Piece> findByProductUuidAndMemberUuid(String productUuid, String memberUuid);
+
+    void deleteAllByProductUuid(String productUuid);
 }

@@ -27,4 +27,9 @@ public class PieceJdbcRepository {
                 });
     }
 
+    public void deletePiecesByProductUuid(String productUuid) {
+        String sql = "DELETE FROM piece WHERE product_uuid = ?";
+
+        jdbcTemplate.update(sql, productUuid);
+    }
 }
