@@ -8,6 +8,8 @@ import java.time.LocalDateTime;
 @Getter
 public class CreateMoneyRequestFeignDto {
 
+    private String memberUuid;
+
     private Long amount;
     private String historyType;
     private Boolean isPositive;
@@ -24,8 +26,9 @@ public class CreateMoneyRequestFeignDto {
     public CreateMoneyRequestFeignDto(
             Long amount, String historyType, Boolean isPositive, String moneyHistoryDetail,
             String bankName, String accountNumber, String accountHolderName, String paymentUuid,
-            LocalDateTime paymentTime, String paymentMethod, String paymentStatus
+            LocalDateTime paymentTime, String paymentMethod, String paymentStatus, String memberUuid
     ) {
+        this.memberUuid = memberUuid;
         this.amount = amount;
         this.historyType = historyType;
         this.isPositive = isPositive;
@@ -39,8 +42,9 @@ public class CreateMoneyRequestFeignDto {
         this.paymentStatus = paymentStatus;
     }
 
-    public static CreateMoneyRequestFeignDto buy(Long totalPrice) {
+    public static CreateMoneyRequestFeignDto buy(String memberUuid, Long totalPrice) {
         return CreateMoneyRequestFeignDto.builder()
+                .memberUuid(memberUuid)
                 .amount(totalPrice)
                 .isPositive(false)
                 .historyType("PIECE_BUY")
@@ -54,8 +58,9 @@ public class CreateMoneyRequestFeignDto {
                 .build();
     }
 
-    public static CreateMoneyRequestFeignDto sell(Long totalPrice) {
+    public static CreateMoneyRequestFeignDto sell(String memberUuid, Long totalPrice) {
         return CreateMoneyRequestFeignDto.builder()
+                .memberUuid(memberUuid)
                 .amount(totalPrice)
                 .isPositive(true)
                 .historyType("PIECE_SELL")

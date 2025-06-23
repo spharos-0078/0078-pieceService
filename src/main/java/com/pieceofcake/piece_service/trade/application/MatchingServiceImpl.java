@@ -141,8 +141,8 @@ public class MatchingServiceImpl implements MatchingService {
         /* 3-3. 예치금 정산 (총 가격 = 체결가 × 체결 수량) */
         long totalPrice = matchQuantity * piecePrice;
 
-        paymentFeignClient.createMoney(buy.getMemberUuid(), CreateMoneyRequestFeignDto.buy(totalPrice)); // 매수자 차감
-        paymentFeignClient.createMoney(sell.getMemberUuid(), CreateMoneyRequestFeignDto.sell(totalPrice)); // 매도자 입금
+        paymentFeignClient.createMoney(buy.getMemberUuid(), CreateMoneyRequestFeignDto.buy(buy.getMemberUuid(), totalPrice)); // 매수자 차감
+        paymentFeignClient.createMoney(sell.getMemberUuid(), CreateMoneyRequestFeignDto.sell(sell.getMemberUuid(), totalPrice)); // 매도자 입금
 
         /* 3-4. 잔량 차감 및 상태 업데이트 */
         buy.reduceQuantity(matchQuantity);
