@@ -3,29 +3,69 @@ package com.pieceofcake.piece_service.trade.infrastructure.feign.dto;
 import lombok.Builder;
 import lombok.Getter;
 
+import java.time.LocalDateTime;
+
 @Getter
 public class CreateMoneyRequestFeignDto {
 
-    private Long price;
-    private String moneyHistoryType;
+    private Long amount;
+    private String historyType;
+    private Boolean isPositive;
+    private String moneyHistoryDetail;
+    private String bankName;
+    private String accountNumber;
+    private String accountHolderName;
+    private String paymentUuid;
+    private LocalDateTime paymentTime;
+    private String paymentMethod;
+    private String paymentStatus;
 
     @Builder
-    public CreateMoneyRequestFeignDto(Long price, String moneyHistoryType) {
-        this.price = price;
-        this.moneyHistoryType = moneyHistoryType;
+    public CreateMoneyRequestFeignDto(
+            Long amount, String historyType, Boolean isPositive, String moneyHistoryDetail,
+            String bankName, String accountNumber, String accountHolderName, String paymentUuid,
+            LocalDateTime paymentTime, String paymentMethod, String paymentStatus
+    ) {
+        this.amount = amount;
+        this.historyType = historyType;
+        this.isPositive = isPositive;
+        this.moneyHistoryDetail = moneyHistoryDetail;
+        this.bankName = bankName;
+        this.accountNumber = accountNumber;
+        this.accountHolderName = accountHolderName;
+        this.paymentUuid = paymentUuid;
+        this.paymentTime = paymentTime;
+        this.paymentMethod = paymentMethod;
+        this.paymentStatus = paymentStatus;
     }
 
     public static CreateMoneyRequestFeignDto buy(Long totalPrice) {
         return CreateMoneyRequestFeignDto.builder()
-                .price(totalPrice)
-                .moneyHistoryType("FRACTION_BUY")
+                .amount(totalPrice)
+                .isPositive(false)
+                .historyType("PIECE_BUY")
+                .moneyHistoryDetail("조각 매수")
+                .bankName("")
+                .accountNumber("")
+                .accountHolderName("")
+                .paymentUuid("")
+                .paymentMethod("")
+                .paymentStatus("")
                 .build();
     }
 
     public static CreateMoneyRequestFeignDto sell(Long totalPrice) {
         return CreateMoneyRequestFeignDto.builder()
-                .price(totalPrice)
-                .moneyHistoryType("FRACTION_SELL")
+                .amount(totalPrice)
+                .isPositive(true)
+                .historyType("PIECE_SELL")
+                .moneyHistoryDetail("조각 매도")
+                .bankName("")
+                .accountNumber("")
+                .accountHolderName("")
+                .paymentUuid("")
+                .paymentMethod("")
+                .paymentStatus("")
                 .build();
     }
 
