@@ -104,17 +104,18 @@ public class MatchingServiceImpl implements MatchingService {
             if (!priceCondition) break;
 
             // ③ 체결 가능 수량 산출
-            int qty = calculateMatchQuantity(reservation, counter);
+            int matchQuantity = calculateMatchQuantity(reservation, counter);
             long piecePrice = isBuy ? counter.getRegisteredPrice() : reservation.getRegisteredPrice();
-
+            LocalDateTime matchedTime = LocalDateTime.now();
             String matchedUuid = UUID.randomUUID().toString().substring(0, 32);
-            saveMatchedHistory(reservation, counter, matchedUuid, piecePrice, qty);
+
+            saveMatchedHistory(reservation, counter, matchedUuid, piecePrice, matchQuantity, matchedTime);
 
             // ④ 체결 실행
             if (isBuy) {
-                executeTrade(reservation, counter, qty, piecePrice, matchedUuid); // reservation = buy
+                executeTrade(reservation, counter, matchQuantity, piecePrice, matchedUuid); // reservation = buy
             } else {
-                executeTrade(counter, reservation, qty, piecePrice, matchedUuid); // reservation = sell
+                executeTrade(counter, reservation, matchQuantity, piecePrice, matchedUuid); // reservation = sell
             }
 
             // 남은 수량 0 → COMPLETED → 더 이상 반복 필요 X
@@ -125,7 +126,9 @@ public class MatchingServiceImpl implements MatchingService {
     /* ============================================================================
        3. executeTrade : 실제 체결(소유권·예치금·잔량·상태) 처리
        ============================================================================ */
-    private void executeTrade(PieceTradeReservation buy, PieceTradeReservation sell, int matchQuantity, long piecePrice, String matchedUuid) {
+    private void executeTrade(PieceTradeReservation buy, PieceTradeReservation sell,
+                              int matchQuantity, long piecePrice, String matchedUuid
+    ) {
         /* 3-1. 매도자 보유 조각 중 앞에서부터 matchQuantity 개 가져오기 */
         List<OwnedPiece> sellerPieces = ownedPieceRepository
                 .findByMemberUuidAndPieceProductUuid(sell.getMemberUuid(), sell.getPieceProductUuid())
@@ -134,7 +137,6 @@ public class MatchingServiceImpl implements MatchingService {
         /* 3-2. 조각별로 소유권 이전 + 체결 이력 저장 */
         for (OwnedPiece piece : sellerPieces) {
             transferOwnership(piece, buy.getMemberUuid());
-
             saveTradeHistory(buy, sell, piece, matchedUuid);
         }
 
@@ -147,8 +149,7 @@ public class MatchingServiceImpl implements MatchingService {
         /* 3-4. 잔량 차감 및 상태 업데이트 */
         buy.reduceQuantity(matchQuantity);
         sell.reduceQuantity(matchQuantity);
-        tradeReservationRepository.save(sell);
-        tradeReservationRepository.save(buy);
+        tradeReservationRepository.saveAll(List.of(buy, sell));
 
         // 3-5. Redis로 호가창 데이터 전송 (가격 기준 수량 누적)
         redisPublisher.publishOrderBook(buy.getPieceProductUuid(), piecePrice, matchQuantity, TradeType.BUY.name());
@@ -174,36 +175,20 @@ public class MatchingServiceImpl implements MatchingService {
 
     private void saveMatchedHistory(
             PieceTradeReservation reservation, PieceTradeReservation counter,
-            String matchedUuid, long piecePrice, int matchedQuantity
+            String matchedUuid, long piecePrice, int matchedQuantity, LocalDateTime matchedTime
     ) {
-        PieceTradeReservation buyReservation;
-        PieceTradeReservation sellReservation;
+        PieceTradeReservation buyReservation = reservation.getTradeType() == TradeType.BUY ? reservation : counter;
+        PieceTradeReservation sellReservation = reservation.getTradeType() == TradeType.SELL ? reservation : counter;
 
-        if (reservation.getTradeType().equals(TradeType.BUY)) {
-            buyReservation = reservation;
-            sellReservation = counter;
-        } else {
-            buyReservation = counter;
-            sellReservation = reservation;
-        }
+        pieceMatchedHistoryRepository.save(CreateMatchedHistoryRequestDto.of(
+                buyReservation, matchedUuid, piecePrice, matchedQuantity, buyReservation.getMemberUuid(), TradeType.BUY).toEntity());
 
-        CreateMatchedHistoryRequestDto buyDto = CreateMatchedHistoryRequestDto.of(
-                buyReservation, matchedUuid, piecePrice, matchedQuantity,
-                buyReservation.getMemberUuid(), TradeType.BUY
+        pieceMatchedHistoryRepository.save(CreateMatchedHistoryRequestDto.of(
+                sellReservation, matchedUuid, piecePrice, matchedQuantity, sellReservation.getMemberUuid(), TradeType.SELL).toEntity());
+
+        redisPublisher.publishTradeVolume(
+                reservation.getPieceProductUuid(), piecePrice, matchedQuantity, matchedTime
         );
-
-        // 매도자 기록
-        CreateMatchedHistoryRequestDto sellDto = CreateMatchedHistoryRequestDto.of(
-                sellReservation, matchedUuid, piecePrice, matchedQuantity,
-                sellReservation.getMemberUuid(), TradeType.SELL
-        );
-
-        pieceMatchedHistoryRepository.save(buyDto.toEntity());
-        pieceMatchedHistoryRepository.save(sellDto.toEntity());
-
-
-        // 거래량 집계용 Redis 전송
-        redisPublisher.publishTradeVolume(reservation.getPieceProductUuid(), piecePrice, matchedQuantity, LocalDateTime.now());
     }
 
     /** 가능한 체결 수량 = 두 주문의 ‘남은 수량’ 중 더 작은 값 */
