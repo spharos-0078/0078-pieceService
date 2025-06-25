@@ -12,6 +12,9 @@ public class RedissonConfig {
     @Value("${spring.data.redis.host}")
     private String redisHost;
 
+    @Value("${spring.data.redis.password}")
+    private String redisPassword;
+
     @Bean
     public RedissonClient redissonClient() {
         Config config = new Config();
@@ -19,6 +22,7 @@ public class RedissonConfig {
         // 단일 노드 Redis (예: localhost:6379)
         config.useSingleServer()
                 .setAddress("redis://" + redisHost + ":6379")
+                .setPassword(redisPassword)
                 .setConnectionMinimumIdleSize(1)
                 .setConnectionPoolSize(10)
                 .setRetryAttempts(3)
