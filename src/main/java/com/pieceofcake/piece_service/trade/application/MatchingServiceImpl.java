@@ -11,6 +11,8 @@ import com.pieceofcake.piece_service.trade.infrastructure.feign.dto.CreateMoneyR
 import com.pieceofcake.piece_service.trade.infrastructure.redis.RedisPublisher;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,6 +20,7 @@ import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -32,11 +35,38 @@ public class MatchingServiceImpl implements MatchingService {
     private final PieceMatchedHistoryRepository pieceMatchedHistoryRepository;
 
     private final RedisPublisher redisPublisher;
+    private final RedissonClient redissonClient;
+
     private final FailedPaymentLogRepository failedPaymentLogRepository;
+    private final OwnedPieceAverageRepository ownedPieceAverageRepository;
 
     @Transactional
     @Override
     public void match(PieceTradeReservation reservation) {
+        /* 동시에 여러 사용자가 동일한 조각 상품에 대해 주문을 시도
+         * 데이터베이스에서는 동시성 제어가 복잡하고 무겁기 때문에, Redis로 락 처리
+         */
+        String lockKey = "lock:match:" + reservation.getPieceProductUuid();
+        RLock lock = redissonClient.getLock(lockKey);
+        boolean locked = false;
+
+        try {
+            locked = lock.tryLock(5, 3, TimeUnit.SECONDS);
+            if (!locked) {
+                log.warn("체결 락 획득 실패: {}", lockKey);
+                return;
+            }
+            doMatch(reservation);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.error("매칭 중단됨: {}", e.getMessage());
+        } finally {
+            if (locked) lock.unlock();
+        }
+
+    }
+
+    private void doMatch(PieceTradeReservation reservation) {
         String pieceProductUuid = reservation.getPieceProductUuid();
 
         if (reservation.getTradeType() == TradeType.BUY) {
@@ -141,6 +171,9 @@ public class MatchingServiceImpl implements MatchingService {
             log.error("매도자 예치금 입금 실패: member={}, amount={}", sell.getMemberUuid(), totalPrice);
         }
 
+        updateAveragePrice(buy.getMemberUuid(), buy.getPieceProductUuid(), matchQuantity, piecePrice, TradeType.BUY);
+        updateAveragePrice(sell.getMemberUuid(), sell.getPieceProductUuid(), matchQuantity, piecePrice, TradeType.SELL);
+
         /* 4. 잔량 차감 및 상태 업데이트 */
         buy.reduceQuantity(matchQuantity);
         sell.reduceQuantity(matchQuantity);
@@ -194,5 +227,35 @@ public class MatchingServiceImpl implements MatchingService {
     /** 자기 체결 방지 **/
     private boolean isSelfTrade(PieceTradeReservation a, PieceTradeReservation b) {
         return a.getMemberUuid().equals(b.getMemberUuid());
+    }
+
+    private void updateAveragePrice(String memberUuid,
+                                    String pieceProductUuid,
+                                    int qty,
+                                    long pricePerPiece,
+                                    TradeType tradeType) {
+
+        OwnedPieceAverage avg = ownedPieceAverageRepository
+                .findByMemberUuidAndPieceProductUuid(memberUuid, pieceProductUuid)
+                .orElseGet(() -> OwnedPieceAverage.builder()
+                        .memberUuid(memberUuid)
+                        .pieceProductUuid(pieceProductUuid)
+                        .totalQuantity(0)
+                        .totalAmount(0L)
+                        .averagePrice(0L)
+                        .build());
+
+        if (tradeType == TradeType.BUY) {
+            avg.increase(qty, pricePerPiece);
+        } else if (tradeType == TradeType.SELL) {
+            avg.decrease(qty, pricePerPiece);
+        }
+
+        if (avg.getTotalQuantity() == 0) {
+            ownedPieceAverageRepository.delete(avg);
+            return;
+        }
+
+        ownedPieceAverageRepository.save(avg);
     }
 }
