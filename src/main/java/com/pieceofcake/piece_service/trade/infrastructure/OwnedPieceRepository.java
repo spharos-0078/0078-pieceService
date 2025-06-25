@@ -19,6 +19,7 @@ public interface OwnedPieceRepository extends JpaRepository<OwnedPiece, Long> {
             "GROUP BY o.pieceProductUuid")
     List<Object[]> countOwnedPiecesByMemberUuid(@Param("memberUuid") String memberUuid);
 
+
     List<OwnedPiece> findByMemberUuidAndPieceProductUuid(String memberUuid, String pieceProductUuid);
 
     Long countByMemberUuidAndPieceProductUuid(String memberUuid, String pieceProductUuid);

@@ -8,6 +8,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
@@ -49,10 +50,9 @@ public class RedisPublisher {
     }
 
     /**
-     * 호가창 업데이트 및 로그 저장
-     *
+     * [2] 호가창 데이터 전송 (예약 발생 시)
      * Key (Hash): pieceOrderbook:{조각상품UUID}:{buy|sell} → price : quantity (누적)
-     * Key (List): pieceOrderLog:{조각상품UUID}:{buy|sell} → {pieceProductUuid, price, quantity, tradeType, timestamp}
+     * Key (List): pieceOrderLog:{조각상품UUID}:{buy|sell} → 예약 로그
      */
     public void publishOrderBook(String pieceProductUuid, long price, int quantity, String tradeType) {
         String normalizedTradeType = tradeType.toLowerCase();
@@ -76,6 +76,24 @@ public class RedisPublisher {
             redisTemplate.opsForList().leftPush(logKey, logValue);
         } catch (JsonProcessingException e) {
             log.error("[RedisPublisher] 호가 로그 JSON 직렬화 실패: {}", e.getMessage(), e);
+        }
+    }
+
+    /**
+     * [3] 호가 정보 롤백 (체결로 인해 수량 차감 필요할 때)
+     */
+    public void rollbackOrderBook(String pieceProductUuid, long price, int quantity, String tradeType) {
+        String key = String.format("pieceOrderbook:%s:%s", pieceProductUuid, tradeType.toLowerCase());
+        redisTemplate.opsForHash().increment(key, String.valueOf(price), -quantity);
+    }
+
+    /**
+     * [4] 거래 가능 시간 (00:00~22:00) 검증 함수
+     */
+    public void validateMarketOpen() {
+        LocalTime now = LocalTime.now();
+        if (now.isAfter(LocalTime.of(22, 0)) || now.isBefore(LocalTime.MIDNIGHT)) {
+            throw new IllegalStateException("현재는 거래 가능한 시간이 아닙니다. (00:00~22:00)");
         }
     }
 }
