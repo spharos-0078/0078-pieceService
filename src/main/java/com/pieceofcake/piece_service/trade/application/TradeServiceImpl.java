@@ -14,6 +14,8 @@ import com.pieceofcake.piece_service.trade.infrastructure.feign.client.PaymentFe
 import com.pieceofcake.piece_service.trade.infrastructure.feign.dto.BaseResponse;
 import com.pieceofcake.piece_service.trade.infrastructure.feign.dto.ReadMoneyAmountResponseDto;
 import com.pieceofcake.piece_service.trade.infrastructure.redis.RedisPublisher;
+import com.pieceofcake.piece_service.trade.scheduler.TradingTimeChecker;
+import com.pieceofcake.piece_service.trade.util.PriceStepValidator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,12 +27,13 @@ import java.util.List;
 public class TradeServiceImpl implements TradeService {
 
     private final OwnedPieceRepository ownedPieceRepository;
-    private final TradedHistoryRepository tradedHistoryRepository;
     private final TradeReservationRepository tradeReservationRepository;
     private final PaymentFeignClient paymentFeignClient;
     private final PieceRepository pieceRepository;
     private final MatchingService matchingService;
     private final RedisPublisher redisPublisher;
+
+    private final TradingTimeChecker tradingTimeChecker;
 
     @Override
     public List<GetOwnedMemberAndPieceQuantityResponseDto> getOwnedMemberAndQuantity(String pieceProductUuid) {
@@ -72,7 +75,15 @@ public class TradeServiceImpl implements TradeService {
     @Override
     public void createBuyReservation(String memberUuid, CreateTradeRequestDto createTradeRequestDto) {
         // 거래 가능 시간 검증
-        redisPublisher.validateMarketOpen();
+        if (!tradingTimeChecker.isMarketOpen()) {
+            throw new IllegalStateException("현재는 거래 가능한 시간이 아닙니다.");
+        }
+
+        long price = createTradeRequestDto.getRegisteredPrice();
+        if (!PriceStepValidator.isValidPrice(price)) {
+            long step = PriceStepValidator.getPriceStep(price);
+            throw new IllegalArgumentException("해당 가격대의 호가 단위는 " + step + "원입니다.");
+        }
 
         long totalPrice = createTradeRequestDto.getRegisteredPrice() * createTradeRequestDto.getDesiredQuantity();
         long currentAmount = getAvailableAmount(memberUuid);
@@ -100,7 +111,15 @@ public class TradeServiceImpl implements TradeService {
     @Override
     public void createSellReservation(String memberUuid, CreateTradeRequestDto createTradeRequestDto) {
         // 거래 가능 시간 검증
-        redisPublisher.validateMarketOpen();
+        if (!tradingTimeChecker.isMarketOpen()) {
+            throw new IllegalStateException("현재는 거래 가능한 시간이 아닙니다.");
+        }
+
+        long price = createTradeRequestDto.getRegisteredPrice();
+        if (!PriceStepValidator.isValidPrice(price)) {
+            long step = PriceStepValidator.getPriceStep(price);
+            throw new IllegalArgumentException("해당 가격대의 호가 단위는 " + step + "원입니다.");
+        }
 
         // 1. 보유 조각 검증
         List<OwnedPiece> ownedPieces = ownedPieceRepository
