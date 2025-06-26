@@ -1,5 +1,6 @@
 package com.pieceofcake.piece_service.kafka.event;
 
+import com.pieceofcake.piece_service.piece.entity.PieceStatus;
 import lombok.*;
 
 @Getter
@@ -11,4 +12,5 @@ public class PieceEvent {
     private String productUuid;
     private String pieceProductUuid;
     private Boolean isTrading;
+    private PieceStatus status;
 }

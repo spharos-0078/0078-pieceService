@@ -9,6 +9,7 @@ import com.pieceofcake.piece_service.piece.dto.in.GetPieceProductUuidListRequest
 import com.pieceofcake.piece_service.piece.dto.in.UpdatePieceProductRequestDto;
 import com.pieceofcake.piece_service.piece.dto.out.GetPieceProductUuidListResponseDto;
 import com.pieceofcake.piece_service.piece.entity.PieceProduct;
+import com.pieceofcake.piece_service.piece.entity.PieceStatus;
 import com.pieceofcake.piece_service.piece.infrastructure.PieceProductCustomImplRepository;
 import com.pieceofcake.piece_service.piece.infrastructure.PieceProductRepository;
 import lombok.RequiredArgsConstructor;
@@ -39,6 +40,7 @@ public class PieceProductServiceImpl implements PieceProductService {
                         .productUuid(pieceProduct.getProductUuid())
                         .pieceProductUuid(pieceProduct.getPieceProductUuid())
                         .isTrading(pieceProduct.getIsTrading())
+                        .status(PieceStatus.NONE)
                         .build();
 
                 pieceKafkaProducer.sendCreatePieceEvent(event);
