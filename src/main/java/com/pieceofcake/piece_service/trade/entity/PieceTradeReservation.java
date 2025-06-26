@@ -68,7 +68,5 @@ public class PieceTradeReservation extends BaseEntity {
         }
     }
 
-    public boolean isFullMatched() {
-        return this.remainingQuantity == 0;
-    }
+    public void cancel() { this.tradeStatus = TradeStatus.CANCELED; }
 }

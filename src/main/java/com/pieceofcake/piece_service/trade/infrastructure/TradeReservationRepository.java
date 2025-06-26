@@ -21,4 +21,6 @@ public interface TradeReservationRepository extends JpaRepository<PieceTradeRese
             @Param("status") TradeStatus tradeStatus
     );
 
+    List<PieceTradeReservation> findByTradeStatus(TradeStatus tradeStatus);
+
 }
