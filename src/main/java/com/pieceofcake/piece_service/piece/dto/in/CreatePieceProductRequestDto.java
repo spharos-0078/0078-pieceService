@@ -23,8 +23,9 @@ public class CreatePieceProductRequestDto {
                 .build();
     }
 
-    public PieceProduct toEntity(){
+    public PieceProduct toEntity(String pieceProductUuid){
         return PieceProduct.builder()
+                .pieceProductUuid(pieceProductUuid)
                 .productUuid(productUuid)
                 .marketPrice(marketPrice)
                 .build();
