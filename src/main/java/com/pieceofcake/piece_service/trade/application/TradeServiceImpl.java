@@ -9,7 +9,6 @@ import com.pieceofcake.piece_service.trade.entity.OwnedPiece;
 import com.pieceofcake.piece_service.trade.entity.PieceTradeReservation;
 import com.pieceofcake.piece_service.trade.infrastructure.OwnedPieceRepository;
 import com.pieceofcake.piece_service.trade.infrastructure.TradeReservationRepository;
-import com.pieceofcake.piece_service.trade.infrastructure.TradedHistoryRepository;
 import com.pieceofcake.piece_service.trade.infrastructure.feign.client.PaymentFeignClient;
 import com.pieceofcake.piece_service.trade.infrastructure.feign.dto.BaseResponse;
 import com.pieceofcake.piece_service.trade.infrastructure.feign.dto.ReadMoneyAmountResponseDto;

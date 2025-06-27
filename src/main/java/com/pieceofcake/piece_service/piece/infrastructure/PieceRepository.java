@@ -21,4 +21,6 @@ public interface PieceRepository extends JpaRepository<Piece, Long> {
     List<Piece> findByProductUuidAndMemberUuid(String productUuid, String memberUuid);
 
     void deleteAllByProductUuid(String productUuid);
+
+    List<Piece> findByProductUuid(String productUuid);
 }
