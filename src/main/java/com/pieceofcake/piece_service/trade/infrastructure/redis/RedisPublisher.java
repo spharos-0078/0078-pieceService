@@ -96,4 +96,30 @@ public class RedisPublisher {
             throw new IllegalStateException("현재는 거래 가능한 시간이 아닙니다. (00:00~22:00)");
         }
     }
+
+    /**
+     * [5] Redis Pub/Sub 이벤트 발행
+     */
+    public void publishRedisEvent(String channel, Object message) {
+        try {
+            String json = objectMapper.writeValueAsString(message);
+            redisTemplate.convertAndSend(channel, json);
+            log.info("[RedisPublisher] Redis 이벤트 발행: channel={}, payload={}", channel, json);
+        } catch (JsonProcessingException e) {
+            log.error("Redis 이벤트 직렬화 실패", e);
+        }
+    }
+
+    public void publishTradeReservedEvent(String tradeType, String memberUuid,
+                                          String pieceProductUuid, long price, int quantity, LocalDateTime timestamp) {
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("type", tradeType.toUpperCase());
+        payload.put("memberUuid", memberUuid);
+        payload.put("pieceProductUuid", pieceProductUuid);
+        payload.put("price", price);
+        payload.put("quantity", quantity);
+        payload.put("timestamp", timestamp.toString());
+
+        publishRedisEvent("trade-reserved", payload);
+    }
 }
