@@ -53,4 +53,10 @@ public class OwnedPieceAverage  extends BaseEntity {
         this.totalAmount -= qty * pricePerPiece;
         this.averagePrice = totalQuantity == 0 ? 0 : totalAmount / totalQuantity;
     }
+
+    public void update(long totalAmount, int totalQuantity, long averagePrice) {
+        this.totalAmount = totalAmount;
+        this.totalQuantity = totalQuantity;
+        this.averagePrice = averagePrice;
+    }
 }

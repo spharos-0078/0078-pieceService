@@ -38,4 +38,8 @@ public class Piece extends BaseEntity {
     public void changeAssignStatusToMember(String memberUuid){
         this.memberUuid = memberUuid;
     }
+
+    public void setMemberUuid(String memberUuid) {
+        this.memberUuid = memberUuid;
+    }
 }
