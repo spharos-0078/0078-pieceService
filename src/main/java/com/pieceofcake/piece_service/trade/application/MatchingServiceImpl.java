@@ -17,9 +17,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.Comparator;
-import java.util.List;
-import java.util.UUID;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
@@ -217,6 +216,14 @@ public class MatchingServiceImpl implements MatchingService {
         redisPublisher.publishTradeVolume(
                 reservation.getPieceProductUuid(), piecePrice, matchedQuantity, matchedTime
         );
+
+        Map<String, Object> pubsubPayload = new HashMap<>();
+        pubsubPayload.put("pieceProductUuid", reservation.getPieceProductUuid());
+        pubsubPayload.put("piecePrice", piecePrice);
+        pubsubPayload.put("matchedQuantity", matchedQuantity);
+        pubsubPayload.put("matchedTime", matchedTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+
+        redisPublisher.publishRedisEvent("trade-matched", pubsubPayload);
     }
 
     /** 가능한 체결 수량 = 두 주문의 ‘남은 수량’ 중 더 작은 값 */

@@ -19,7 +19,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RequiredArgsConstructor
 @Service
@@ -99,6 +102,14 @@ public class TradeServiceImpl implements TradeService {
         redisPublisher.publishOrderBook(buyReservation.getPieceProductUuid(), buyReservation.getRegisteredPrice(),
                 buyReservation.getDesiredQuantity(), buyReservation.getTradeType().name());
 
+        // ✅ 예약 이벤트 발행 (공통 메서드 사용)
+        redisPublisher.publishTradeReservedEvent(
+                "BUY", memberUuid,
+                buyReservation.getPieceProductUuid(),
+                buyReservation.getRegisteredPrice(),
+                buyReservation.getDesiredQuantity(),
+                buyReservation.getCreatedAt()
+        );
 
         // 3. 체결 시도
         matchingService.match(buyReservation);
@@ -143,6 +154,15 @@ public class TradeServiceImpl implements TradeService {
         redisPublisher.publishOrderBook(sellReservation.getPieceProductUuid(), sellReservation.getRegisteredPrice(),
                 sellReservation.getDesiredQuantity(), sellReservation.getTradeType().name());
 
+        // ✅ 예약 이벤트 발행 (공통 메서드 사용)
+        redisPublisher.publishTradeReservedEvent(
+                "SELL", memberUuid,
+                sellReservation.getPieceProductUuid(),
+                sellReservation.getRegisteredPrice(),
+                sellReservation.getDesiredQuantity(),
+                sellReservation.getCreatedAt()
+        );
+
         // 4. 체결 시도
         matchingService.match(sellReservation);
     }
@@ -151,5 +171,4 @@ public class TradeServiceImpl implements TradeService {
         BaseResponse<ReadMoneyAmountResponseDto> amount = paymentFeignClient.getMoney(memberUuid);
         return amount.getResult().getAmount();
     }
-
 }
