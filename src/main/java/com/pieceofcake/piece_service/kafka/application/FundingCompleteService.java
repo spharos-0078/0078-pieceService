@@ -1,6 +1,8 @@
 package com.pieceofcake.piece_service.kafka.application;
 
 import com.pieceofcake.piece_service.kafka.dto.FundingCompleteKafkaDto;
+import com.pieceofcake.piece_service.piece.application.PieceProductServiceImpl;
+import com.pieceofcake.piece_service.piece.dto.in.CreatePieceProductRequestDto;
 import com.pieceofcake.piece_service.piece.entity.Piece;
 import com.pieceofcake.piece_service.piece.entity.PieceProduct;
 import com.pieceofcake.piece_service.piece.infrastructure.PieceProductRepository;
@@ -32,18 +34,14 @@ public class FundingCompleteService {
     private final PieceProductRepository pieceProductRepository;
     private final OwnedPieceAverageRepository ownedPieceAverageRepository;
     private final BoardFeignClient boardFeignClient;
+    private final PieceProductServiceImpl pieceProductService;
 
     @Transactional
     public void processFundingComplete(FundingCompleteKafkaDto dto) {
         // 1. 조각상품 생성
-        PieceProduct pieceProduct = PieceProduct.builder()
-                .pieceProductUuid(UUID.randomUUID().toString())
-                .productUuid(dto.getProductUuid())
-                .marketPrice(dto.getPiecePrice())
-                .totalPieces(dto.getTotalPieces())
-                .isTrading(dto.isTrading())
-                .build();
-        pieceProductRepository.save(pieceProduct);
+        PieceProduct pieceProduct = pieceProductService.createPieceProduct(
+                CreatePieceProductRequestDto.from(dto.getProductUuid(), dto.getPiecePrice(), dto.getTotalPieces())
+        );
 
         // 조각상품 게시판 생성
         CreateBoardRequestFeignDto boardRequest = CreateBoardRequestFeignDto.builder()

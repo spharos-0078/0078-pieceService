@@ -8,18 +8,29 @@ import lombok.Getter;
 @Getter
 public class CreatePieceProductRequestDto {
     private String productUuid;
+    private Integer totalPieces;
     private Long marketPrice;
 
     @Builder
-    public CreatePieceProductRequestDto(String productUuid, Long marketPrice) {
+    public CreatePieceProductRequestDto(String productUuid, Long marketPrice, Integer totalPieces) {
         this.productUuid = productUuid;
         this.marketPrice = marketPrice;
+        this.totalPieces = totalPieces;
     }
 
     public static CreatePieceProductRequestDto from(CreatePieceProductRequestVo vo){
         return CreatePieceProductRequestDto.builder()
                 .productUuid(vo.getProductUuid())
                 .marketPrice(vo.getMarketPrice())
+                .totalPieces(vo.getTotalPieces())
+                .build();
+    }
+
+    public static CreatePieceProductRequestDto from(String productUuid, Long marketPrice, Integer totalPieces){
+        return CreatePieceProductRequestDto.builder()
+                .productUuid(productUuid)
+                .marketPrice(marketPrice)
+                .totalPieces(totalPieces)
                 .build();
     }
 
