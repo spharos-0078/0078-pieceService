@@ -14,4 +14,8 @@ public interface PieceProductRepository extends JpaRepository<PieceProduct, Long
     @Modifying
     @Query("UPDATE PieceProduct p SET p.isDeleted = true WHERE p.pieceProductUuid = :pieceProductUuid")
     void softDeleteByPieceProductUuid(@Param("pieceProductUuid") String pieceProductUuid);
+
+    @Modifying
+    @Query("UPDATE PieceProduct p SET p.marketPrice = :price WHERE p.pieceProductUuid = :pieceProductUuid")
+    void updateMarketPrice(@Param("pieceProductUuid") String pieceProductUuid, @Param("price") long price);
 }

@@ -1,5 +1,6 @@
 package com.pieceofcake.piece_service.trade.application;
 
+import com.pieceofcake.piece_service.piece.infrastructure.PieceProductRepository;
 import com.pieceofcake.piece_service.piece.infrastructure.PieceRepository;
 import com.pieceofcake.piece_service.trade.dto.in.CreateMatchedHistoryRequestDto;
 import com.pieceofcake.piece_service.trade.dto.in.CreateTradedHistoryRequestDto;
@@ -38,6 +39,7 @@ public class MatchingServiceImpl implements MatchingService {
 
     private final FailedPaymentLogRepository failedPaymentLogRepository;
     private final OwnedPieceAverageRepository ownedPieceAverageRepository;
+    private final PieceProductRepository pieceProductRepository;
 
     @Transactional
     @Override
@@ -181,6 +183,9 @@ public class MatchingServiceImpl implements MatchingService {
         /* 5. Redis로 호가창 데이터 전송 (가격 기준 수량 누적) */
         redisPublisher.publishOrderBook(buy.getPieceProductUuid(), piecePrice, matchQuantity, TradeType.BUY.name());
         redisPublisher.publishOrderBook(sell.getPieceProductUuid(), piecePrice, matchQuantity, TradeType.SELL.name());
+
+        /* 6. 조각 상품 테이블의 시장가 갱신 */
+        pieceProductRepository.updateMarketPrice(sell.getPieceProductUuid(), piecePrice);
     }
 
     /** 보유 조각 소유권 이전 */
