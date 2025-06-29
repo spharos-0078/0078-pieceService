@@ -5,8 +5,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class PriceStepValidator {
 
-    public static boolean isValidPrice(long piecePrice) {
-        return piecePrice % getPriceStep(piecePrice) == 0;
+    public static boolean isValidPrice(long piecePrice, long currentPrice) {
+        return piecePrice == currentPrice || piecePrice % getPriceStep(piecePrice) == 0;
     }
 
     public static long getPriceStep(long piecePrice) {

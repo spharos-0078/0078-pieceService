@@ -1,5 +1,6 @@
 package com.pieceofcake.piece_service.trade.application;
 
+import com.pieceofcake.piece_service.piece.infrastructure.PieceProductRepository;
 import com.pieceofcake.piece_service.piece.infrastructure.PieceRepository;
 import com.pieceofcake.piece_service.trade.dto.in.CreateTradeRequestDto;
 import com.pieceofcake.piece_service.trade.dto.out.GetAllPieceProductUuidResponseDto;
@@ -16,6 +17,7 @@ import com.pieceofcake.piece_service.trade.infrastructure.redis.RedisPublisher;
 import com.pieceofcake.piece_service.trade.scheduler.TradingTimeChecker;
 import com.pieceofcake.piece_service.trade.util.PriceStepValidator;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,9 +36,11 @@ public class TradeServiceImpl implements TradeService {
     private final PieceRepository pieceRepository;
     private final MatchingService matchingService;
     private final RedisPublisher redisPublisher;
+    private final RedisTemplate<String, String> redisTemplate;
     private final OrderbookSummaryService orderbookSummaryService;
 
     private final TradingTimeChecker tradingTimeChecker;
+    private final PieceProductRepository pieceProductRepository;
 
     @Override
     public List<GetOwnedMemberAndPieceQuantityResponseDto> getOwnedMemberAndQuantity(String pieceProductUuid) {
@@ -82,10 +86,24 @@ public class TradeServiceImpl implements TradeService {
             throw new IllegalStateException("현재는 거래 가능한 시간이 아닙니다.");
         }
 
+        String pieceProductUuid = createTradeRequestDto.getPieceProductUuid();
         long price = createTradeRequestDto.getRegisteredPrice();
-        if (!PriceStepValidator.isValidPrice(price)) {
+
+        // 현재가 조회
+        String lastPriceStr = redisTemplate
+                .opsForValue()
+                .get("pieceLastPrice:" + pieceProductUuid);
+        if (lastPriceStr == null) {
+            lastPriceStr = pieceProductRepository.findByPieceProductUuid(pieceProductUuid)
+                    .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 조각상품입니다."))
+                    .getMarketPrice().toString();
+        }
+        long currentPrice = Long.parseLong(lastPriceStr);
+
+        // 호가 단위 검증
+        if (!PriceStepValidator.isValidPrice(price, currentPrice)) {
             long step = PriceStepValidator.getPriceStep(price);
-            throw new IllegalArgumentException("해당 가격대의 호가 단위는 " + step + "원입니다.");
+            throw new IllegalArgumentException("해당 가격대의 호가 단위는 " + step + "원이며, 현재가는 " + currentPrice + "원입니다.");
         }
 
         long totalPrice = createTradeRequestDto.getRegisteredPrice() * createTradeRequestDto.getDesiredQuantity();
@@ -130,10 +148,24 @@ public class TradeServiceImpl implements TradeService {
             throw new IllegalStateException("현재는 거래 가능한 시간이 아닙니다.");
         }
 
+        String pieceProductUuid = createTradeRequestDto.getPieceProductUuid();
         long price = createTradeRequestDto.getRegisteredPrice();
-        if (!PriceStepValidator.isValidPrice(price)) {
+
+        // 현재가 조회
+        String lastPriceStr = redisTemplate
+                .opsForValue()
+                .get("pieceLastPrice:" + pieceProductUuid);
+        if (lastPriceStr == null) {
+            lastPriceStr = pieceProductRepository.findByPieceProductUuid(pieceProductUuid)
+                    .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 조각상품입니다."))
+                    .getMarketPrice().toString();
+        }
+        long currentPrice = Long.parseLong(lastPriceStr);
+
+        // 호가 단위 검증
+        if (!PriceStepValidator.isValidPrice(price, currentPrice)) {
             long step = PriceStepValidator.getPriceStep(price);
-            throw new IllegalArgumentException("해당 가격대의 호가 단위는 " + step + "원입니다.");
+            throw new IllegalArgumentException("해당 가격대의 호가 단위는 " + step + "원이며, 현재가는 " + currentPrice + "원입니다.");
         }
 
         // 1. 보유 조각 검증
