@@ -1,5 +1,8 @@
 package com.pieceofcake.piece_service.trade.application;
 
+import com.pieceofcake.piece_service.common.entity.BaseResponseStatus;
+import com.pieceofcake.piece_service.common.exception.BaseException;
+import com.pieceofcake.piece_service.piece.infrastructure.PieceProductRepository;
 import com.pieceofcake.piece_service.trade.util.PriceStepValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,12 +20,18 @@ import java.util.Map;
 public class OrderbookSummaryService {
     private final RedisTemplate<String, String> redisTemplate;
     private final PriceStepValidator priceStepValidator;
+    private final PieceProductRepository pieceProductRepository;
 
     public Map<String, Object> buildOrderbookSummary(String pieceUuid) {
         // 1) 체결가 조회
         String priceKey = "pieceLastPrice:" + pieceUuid;
         String lastPriceStr = redisTemplate.opsForValue().get(priceKey);
-        if (lastPriceStr == null) throw new IllegalStateException("체결가 없음");
+        if (lastPriceStr == null) {
+            lastPriceStr = pieceProductRepository.findByPieceProductUuid(pieceUuid).orElseThrow(
+                    () -> new BaseException(BaseResponseStatus.NO_EXIST_PIECE_PRODUCT)
+            ).getMarketPrice().toString();
+//            throw new IllegalStateException("체결가 없음");
+        }
 
         long lastPrice = Long.parseLong(lastPriceStr);
         long step = priceStepValidator.getPriceStep(lastPrice);
