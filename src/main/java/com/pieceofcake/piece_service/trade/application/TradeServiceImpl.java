@@ -34,6 +34,7 @@ public class TradeServiceImpl implements TradeService {
     private final PieceRepository pieceRepository;
     private final MatchingService matchingService;
     private final RedisPublisher redisPublisher;
+    private final OrderbookSummaryService orderbookSummaryService;
 
     private final TradingTimeChecker tradingTimeChecker;
 
@@ -102,14 +103,18 @@ public class TradeServiceImpl implements TradeService {
         redisPublisher.publishOrderBook(buyReservation.getPieceProductUuid(), buyReservation.getRegisteredPrice(),
                 buyReservation.getDesiredQuantity(), buyReservation.getTradeType().name());
 
+        // 최신 호가 요약 생성
+        Map<String, Object> summary = orderbookSummaryService.buildOrderbookSummary(buyReservation.getPieceProductUuid());
+
         // ✅ 예약 이벤트 발행 (공통 메서드 사용)
-        redisPublisher.publishTradeReservedEvent(
-                "BUY", memberUuid,
-                buyReservation.getPieceProductUuid(),
-                buyReservation.getRegisteredPrice(),
-                buyReservation.getDesiredQuantity(),
-                buyReservation.getCreatedAt()
-        );
+//        redisPublisher.publishTradeReservedEvent(
+//                "BUY", memberUuid,
+//                buyReservation.getPieceProductUuid(),
+//                buyReservation.getRegisteredPrice(),
+//                buyReservation.getDesiredQuantity(),
+//                buyReservation.getCreatedAt()
+//        );
+        redisPublisher.publishOrderbookSummary(buyReservation.getPieceProductUuid(), summary);
 
         // 3. 체결 시도
         matchingService.match(buyReservation);
@@ -154,14 +159,19 @@ public class TradeServiceImpl implements TradeService {
         redisPublisher.publishOrderBook(sellReservation.getPieceProductUuid(), sellReservation.getRegisteredPrice(),
                 sellReservation.getDesiredQuantity(), sellReservation.getTradeType().name());
 
-        // ✅ 예약 이벤트 발행 (공통 메서드 사용)
-        redisPublisher.publishTradeReservedEvent(
-                "SELL", memberUuid,
-                sellReservation.getPieceProductUuid(),
-                sellReservation.getRegisteredPrice(),
-                sellReservation.getDesiredQuantity(),
-                sellReservation.getCreatedAt()
-        );
+        // 최신 호가 요약 생성
+        Map<String, Object> summary = orderbookSummaryService.buildOrderbookSummary(sellReservation.getPieceProductUuid());
+
+        redisPublisher.publishOrderbookSummary(sellReservation.getPieceProductUuid(), summary);
+
+//        // ✅ 예약 이벤트 발행 (공통 메서드 사용)
+//        redisPublisher.publishTradeReservedEvent(
+//                "SELL", memberUuid,
+//                sellReservation.getPieceProductUuid(),
+//                sellReservation.getRegisteredPrice(),
+//                sellReservation.getDesiredQuantity(),
+//                sellReservation.getCreatedAt()
+//        );
 
         // 4. 체결 시도
         matchingService.match(sellReservation);
