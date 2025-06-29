@@ -29,7 +29,7 @@ public class PieceProductServiceImpl implements PieceProductService {
 
     @Transactional
     @Override
-    public void createPieceProduct(CreatePieceProductRequestDto createPieceProductRequestDto) {
+    public PieceProduct createPieceProduct(CreatePieceProductRequestDto createPieceProductRequestDto) {
         PieceProduct pieceProduct = pieceProductRepository.save(createPieceProductRequestDto
                 .toEntity(UUID.randomUUID().toString()));
 
@@ -46,6 +46,8 @@ public class PieceProductServiceImpl implements PieceProductService {
                 pieceKafkaProducer.sendCreatePieceEvent(event);
             }
         });
+
+        return pieceProduct;
     }
 
     @Transactional
