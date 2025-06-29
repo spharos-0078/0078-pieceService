@@ -1,5 +1,8 @@
 package com.pieceofcake.piece_service.trade.util;
 
+import org.springframework.stereotype.Component;
+
+@Component
 public class PriceStepValidator {
 
     public static boolean isValidPrice(long piecePrice) {
