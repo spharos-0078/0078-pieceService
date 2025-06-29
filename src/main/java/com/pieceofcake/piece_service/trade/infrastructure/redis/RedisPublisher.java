@@ -120,6 +120,19 @@ public class RedisPublisher {
         payload.put("quantity", quantity);
         payload.put("timestamp", timestamp.toString());
 
-        publishRedisEvent("trade-reserved", payload);
+        String channel = String.format("piece.orderbook.%s", pieceProductUuid);
+        publishRedisEvent(channel, payload);
     }
+
+    public void publishOrderbookSummary(String pieceUuid, Map<String, Object> summary) {
+        String channel = "piece.orderbook." + pieceUuid;
+        try {
+            String json = objectMapper.writeValueAsString(summary);
+            redisTemplate.convertAndSend(channel, json);
+            log.info("[RedisPublisher] OrderbookSummary 발행: channel={}, payload={}", channel, json);
+        } catch (JsonProcessingException e) {
+            log.error("[RedisPublisher] OrderbookSummary 직렬화 실패", e);
+        }
+    }
+
 }
