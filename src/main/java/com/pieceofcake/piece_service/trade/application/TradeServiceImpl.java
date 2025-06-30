@@ -1,5 +1,7 @@
 package com.pieceofcake.piece_service.trade.application;
 
+import com.pieceofcake.piece_service.common.entity.BaseResponseStatus;
+import com.pieceofcake.piece_service.common.exception.BaseException;
 import com.pieceofcake.piece_service.piece.infrastructure.PieceProductRepository;
 import com.pieceofcake.piece_service.piece.infrastructure.PieceRepository;
 import com.pieceofcake.piece_service.trade.dto.in.CreateTradeRequestDto;
@@ -8,6 +10,7 @@ import com.pieceofcake.piece_service.trade.dto.out.GetOwnedMemberAndPieceQuantit
 import com.pieceofcake.piece_service.trade.dto.out.GetOwnedPieceResponseDto;
 import com.pieceofcake.piece_service.trade.entity.OwnedPiece;
 import com.pieceofcake.piece_service.trade.entity.PieceTradeReservation;
+import com.pieceofcake.piece_service.trade.entity.TradeStatus;
 import com.pieceofcake.piece_service.trade.infrastructure.OwnedPieceRepository;
 import com.pieceofcake.piece_service.trade.infrastructure.TradeReservationRepository;
 import com.pieceofcake.piece_service.trade.infrastructure.feign.client.PaymentFeignClient;
@@ -212,5 +215,24 @@ public class TradeServiceImpl implements TradeService {
     private long getAvailableAmount(String memberUuid) {
         BaseResponse<ReadMoneyAmountResponseDto> amount = paymentFeignClient.getMoney(memberUuid);
         return amount.getResult().getAmount();
+    }
+
+    @Transactional
+    @Override
+    public void cancelReservation(String memberUuid, String reservationUuid) {
+        PieceTradeReservation reservation = tradeReservationRepository.findByReservationUuid(reservationUuid)
+                .orElseThrow(() -> new BaseException(BaseResponseStatus.NO_EXIST_RESERVATION));
+
+        // 본인 예약이 아닌 경우 예외
+        if (!reservation.getMemberUuid().equals(memberUuid)) {
+            throw new BaseException(BaseResponseStatus.NO_AUTH_RESERVATION);
+        }
+
+        // 이미 완료된 거래는 취소 불가
+        if (reservation.getTradeStatus() == TradeStatus.COMPLETED) {
+            throw new BaseException(BaseResponseStatus.ALREADY_COMPLETED_RESERVATION);
+        }
+
+        reservation.cancel();
     }
 }

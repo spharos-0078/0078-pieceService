@@ -22,4 +22,6 @@ public interface TradeService {
     List<GetAllPieceProductUuidResponseDto> getOwnedPieceProductUuidByMemberUuid(String memberUuid);
 
     List<GetOwnedMemberAndPieceQuantityResponseDto> getOwnedMemberAndQuantity(String pieceProductUuid);
+
+    void cancelReservation(String memberUuid, String reservationUuid);
 }

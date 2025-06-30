@@ -7,6 +7,8 @@ import com.pieceofcake.piece_service.trade.dto.in.CreateTradeRequestDto;
 import com.pieceofcake.piece_service.trade.dto.out.GetAllPieceProductUuidResponseDto;
 import com.pieceofcake.piece_service.trade.dto.out.GetOwnedMemberAndPieceQuantityResponseDto;
 import com.pieceofcake.piece_service.trade.dto.out.GetOwnedPieceResponseDto;
+import com.pieceofcake.piece_service.trade.entity.PieceTradeReservation;
+import com.pieceofcake.piece_service.trade.entity.QPieceTradeReservation;
 import com.pieceofcake.piece_service.trade.vo.in.CreateTradeRequestVo;
 import com.pieceofcake.piece_service.trade.vo.out.GetOwnedMemberAndPieceQuantityResponseVo;
 import com.pieceofcake.piece_service.trade.vo.out.GetOwnedPieceResponseVo;
@@ -83,6 +85,17 @@ public class TradeController {
     ) {
         CreateTradeRequestDto result = CreateTradeRequestDto.fromSell(memberUuid, createTradeRequestVo);
         tradeService.createSellReservation(memberUuid, result);
+        return new BaseResponseEntity<>(BaseResponseStatus.SUCCESS);
+    }
+
+    // 조각 예약 취소
+    @Operation(summary = "조각 거래 예약 취소")
+    @PutMapping("/cancel/{reservationUuid}")
+    public BaseResponseEntity<Void> cancelReservation(
+            @RequestHeader("X-Member-Uuid") String memberUuid,
+            @PathVariable String reservationUuid
+    ) {
+        tradeService.cancelReservation(memberUuid, reservationUuid);
         return new BaseResponseEntity<>(BaseResponseStatus.SUCCESS);
     }
 
