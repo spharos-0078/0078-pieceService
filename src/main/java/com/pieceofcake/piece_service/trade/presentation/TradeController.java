@@ -23,7 +23,7 @@ public class TradeController {
 
     private final TradeService tradeService;
 
-    @Operation(summary = "상품별 소유자, 보유조각 전체 조회")
+    @Operation(summary = "상품별 소유자, 보유조각 전체 조회 (관리자용)")
     @GetMapping("/owned/{pieceProductUuid}/list")
     public BaseResponseEntity<List<GetOwnedMemberAndPieceQuantityResponseVo>> getOwnedMemberAndQuantity(
             @PathVariable String pieceProductUuid
@@ -32,7 +32,7 @@ public class TradeController {
                 .stream().map(GetOwnedMemberAndPieceQuantityResponseDto::toVo).toList());
     }
 
-    @Operation(summary = "멤버별 보유조각 전체 조회")
+    @Operation(summary = "본인의 보유조각 전체 조회")
     @GetMapping("/mypage/owned/list")
     public BaseResponseEntity<List<GetOwnedPieceResponseVo>> getOwnedAllPiece(
             @RequestHeader("X-Member-Uuid") String memberUuid
@@ -42,7 +42,7 @@ public class TradeController {
         return new BaseResponseEntity<>(result);
     }
 
-    @Operation(summary = "멤버의 보유 조각상품 UUID 리스트 조회")
+    @Operation(summary = "본인의 보유 조각상품 UUID 리스트 조회")
     @GetMapping("/mypage/owned/uuidlist")
     public BaseResponseEntity<List<GetAllPieceProductUuidResponseVo>> getOwnedPieceUuidList(
             @RequestHeader("X-Member-Uuid") String memberUuid
@@ -53,7 +53,18 @@ public class TradeController {
         return new BaseResponseEntity<>(result);
     }
 
-    @Operation(summary = "멤버의 조각상품별 보유 조각 개수 조회")
+    @Operation(summary = "본인이 보유한 조각상품별 평균단가 정보 상세 조회")
+    @GetMapping("/mypage/owned/piece-average/{pieceProductUuid}")
+    public BaseResponseEntity<GetPieceAverageResponseVo> getPieceAverage(
+            @RequestHeader("X-Member-Uuid") String memberUuid,
+            @PathVariable String pieceProductUuid
+    ) {
+        GetPieceAverageResponseDto pieceAverage = tradeService
+                .getPieceAverageByMemberAndPieceProductUuid(memberUuid, pieceProductUuid);
+        return new BaseResponseEntity<>(pieceAverage.toVo());
+    }
+
+    @Operation(summary = "본인이 보유한 조각상품별 조각 개수 조회")
     @GetMapping("/mypage/owned/{pieceProductUuid}")
     public BaseResponseEntity<GetOwnedPieceResponseVo> getPieceCount(
             @RequestHeader("X-Member-Uuid") String memberUuid,

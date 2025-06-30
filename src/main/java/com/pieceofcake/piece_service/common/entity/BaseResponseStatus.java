@@ -125,6 +125,7 @@ public enum BaseResponseStatus {
     NO_EXIST_RESERVATION(HttpStatus.NOT_FOUND, false, 6002, "예약 내역이 존재하지 않습니다."),
     ALREADY_COMPLETED_RESERVATION(HttpStatus.BAD_REQUEST, false, 6003, "이미 체결된 예약은 취소할 수 없습니다"),
     NO_AUTH_RESERVATION(HttpStatus.FORBIDDEN, false, 6004, "해당 예약을 취소할 권한이 없습니다."),
+    NO_OWNED_PIECE_AVERAGE(HttpStatus.NOT_FOUND, false, 6005, "보유한 평균단가 정보가 없습니다."),
 
     /**
      * 6000: gpt-api error

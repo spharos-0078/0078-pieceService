@@ -2,6 +2,7 @@ package com.pieceofcake.piece_service.trade.application;
 
 import com.pieceofcake.piece_service.trade.dto.in.CreateTradeRequestDto;
 import com.pieceofcake.piece_service.trade.dto.out.*;
+import com.pieceofcake.piece_service.trade.vo.out.GetPieceAverageResponseVo;
 
 import java.util.List;
 
@@ -18,6 +19,8 @@ public interface TradeService {
     void createSellReservation(String memberUuid, CreateTradeRequestDto createTradeRequestDto);
 
     List<GetAllPieceProductUuidResponseDto> getOwnedPieceProductUuidByMemberUuid(String memberUuid);
+
+    GetPieceAverageResponseDto getPieceAverageByMemberAndPieceProductUuid(String memberUuid, String pieceProductUuid);
 
     List<GetOwnedMemberAndPieceQuantityResponseDto> getOwnedMemberAndQuantity(String pieceProductUuid);
 

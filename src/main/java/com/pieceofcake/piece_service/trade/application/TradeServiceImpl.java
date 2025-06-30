@@ -7,8 +7,10 @@ import com.pieceofcake.piece_service.piece.infrastructure.PieceRepository;
 import com.pieceofcake.piece_service.trade.dto.in.CreateTradeRequestDto;
 import com.pieceofcake.piece_service.trade.dto.out.*;
 import com.pieceofcake.piece_service.trade.entity.OwnedPiece;
+import com.pieceofcake.piece_service.trade.entity.OwnedPieceAverage;
 import com.pieceofcake.piece_service.trade.entity.PieceTradeReservation;
 import com.pieceofcake.piece_service.trade.entity.TradeStatus;
+import com.pieceofcake.piece_service.trade.infrastructure.OwnedPieceAverageRepository;
 import com.pieceofcake.piece_service.trade.infrastructure.OwnedPieceRepository;
 import com.pieceofcake.piece_service.trade.infrastructure.TradeReservationRepository;
 import com.pieceofcake.piece_service.trade.infrastructure.feign.client.PaymentFeignClient;
@@ -17,6 +19,7 @@ import com.pieceofcake.piece_service.trade.infrastructure.feign.dto.ReadMoneyAmo
 import com.pieceofcake.piece_service.trade.infrastructure.redis.RedisPublisher;
 import com.pieceofcake.piece_service.trade.scheduler.TradingTimeChecker;
 import com.pieceofcake.piece_service.trade.util.PriceStepValidator;
+import com.pieceofcake.piece_service.trade.vo.out.GetPieceAverageResponseVo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -32,6 +35,7 @@ import java.util.Map;
 public class TradeServiceImpl implements TradeService {
 
     private final OwnedPieceRepository ownedPieceRepository;
+    private final OwnedPieceAverageRepository ownedPieceAverageRepository;
     private final TradeReservationRepository tradeReservationRepository;
     private final PaymentFeignClient paymentFeignClient;
     private final PieceRepository pieceRepository;
@@ -70,6 +74,15 @@ public class TradeServiceImpl implements TradeService {
         List<OwnedPiece> pieces = ownedPieceRepository.findByMemberUuid(memberUuid);
 
         return pieces.stream().map(GetAllPieceProductUuidResponseDto::from).toList();
+    }
+
+    @Override
+    public GetPieceAverageResponseDto getPieceAverageByMemberAndPieceProductUuid(String memberUuid, String pieceProductUuid) {
+        OwnedPieceAverage ownedPieceAverage = ownedPieceAverageRepository
+                .findByMemberUuidAndPieceProductUuid(memberUuid, pieceProductUuid)
+                .orElseThrow(() -> new BaseException(BaseResponseStatus.NO_OWNED_PIECE_AVERAGE));
+
+        return GetPieceAverageResponseDto.from(ownedPieceAverage);
     }
 
     @Override
