@@ -6,8 +6,10 @@ import com.pieceofcake.piece_service.piece.application.PieceProductServiceImpl;
 import com.pieceofcake.piece_service.piece.dto.in.CreatePieceProductRequestDto;
 import com.pieceofcake.piece_service.piece.dto.in.GetPieceProductUuidListRequestDto;
 import com.pieceofcake.piece_service.piece.dto.in.UpdatePieceProductRequestDto;
+import com.pieceofcake.piece_service.piece.dto.out.GetMarketPriceResponseDto;
 import com.pieceofcake.piece_service.piece.vo.in.CreatePieceProductRequestVo;
 import com.pieceofcake.piece_service.piece.vo.in.UpdatePieceProductRequestVo;
+import com.pieceofcake.piece_service.piece.vo.out.GetMarketPriceResponseVo;
 import com.pieceofcake.piece_service.piece.vo.out.GetPieceProductUuidListResponseVo;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
@@ -52,6 +54,13 @@ public class PieceProductController {
                 pieceProductService.getPieceProductUuidList(GetPieceProductUuidListRequestDto.of(page, size, isTrading))
                         .toVo()
         );
+    }
+
+    @Operation(summary = "조각 상품 시장가 조회")
+    @GetMapping("/market-price/{pieceProductUuid}")
+    public BaseResponseEntity<GetMarketPriceResponseVo> getMarketPrice(@PathVariable String pieceProductUuid) {
+        GetMarketPriceResponseDto marketPrice = pieceProductService.getMarketPrice(pieceProductUuid);
+        return new BaseResponseEntity<>(marketPrice.toVo());
     }
 
 }

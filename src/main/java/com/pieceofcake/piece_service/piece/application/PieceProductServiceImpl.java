@@ -7,11 +7,13 @@ import com.pieceofcake.piece_service.kafka.producer.PieceKafkaProducer;
 import com.pieceofcake.piece_service.piece.dto.in.CreatePieceProductRequestDto;
 import com.pieceofcake.piece_service.piece.dto.in.GetPieceProductUuidListRequestDto;
 import com.pieceofcake.piece_service.piece.dto.in.UpdatePieceProductRequestDto;
+import com.pieceofcake.piece_service.piece.dto.out.GetMarketPriceResponseDto;
 import com.pieceofcake.piece_service.piece.dto.out.GetPieceProductUuidListResponseDto;
 import com.pieceofcake.piece_service.piece.entity.PieceProduct;
 import com.pieceofcake.piece_service.piece.entity.PieceStatus;
 import com.pieceofcake.piece_service.piece.infrastructure.PieceProductCustomImplRepository;
 import com.pieceofcake.piece_service.piece.infrastructure.PieceProductRepository;
+import com.pieceofcake.piece_service.piece.vo.out.GetMarketPriceResponseVo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -72,5 +74,13 @@ public class PieceProductServiceImpl implements PieceProductService {
                 getPieceProductUuidListRequestDto.getPageable(),
                 getPieceProductUuidListRequestDto.getIsTrading()
         ));
+    }
+
+    @Override
+    public GetMarketPriceResponseDto getMarketPrice(String pieceProductUuid) {
+        Long marketPrice = pieceProductRepository.findByPieceProductUuid(pieceProductUuid)
+                .orElseThrow(() -> new BaseException(BaseResponseStatus.NO_EXIST_PIECE_PRODUCT)).getMarketPrice();
+
+        return GetMarketPriceResponseDto.from(pieceProductUuid, GetMarketPriceResponseVo.builder().marketPrice(marketPrice).build());
     }
 }
