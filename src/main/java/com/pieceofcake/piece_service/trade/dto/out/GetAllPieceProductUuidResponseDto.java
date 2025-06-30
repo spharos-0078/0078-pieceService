@@ -1,6 +1,7 @@
 package com.pieceofcake.piece_service.trade.dto.out;
 
 import com.pieceofcake.piece_service.trade.entity.OwnedPiece;
+import com.pieceofcake.piece_service.trade.entity.OwnedPieceAverage;
 import com.pieceofcake.piece_service.trade.vo.out.GetAllPieceProductUuidResponseVo;
 import lombok.Builder;
 import lombok.Getter;
@@ -17,9 +18,9 @@ public class GetAllPieceProductUuidResponseDto {
         this.pieceProductUuid = pieceProductUuid;
     }
 
-    public static GetAllPieceProductUuidResponseDto from(OwnedPiece ownedPiece) {
+    public static GetAllPieceProductUuidResponseDto from(OwnedPieceAverage ownedPieceAverage) {
         return GetAllPieceProductUuidResponseDto.builder()
-                .pieceProductUuid(ownedPiece.getPieceProductUuid())
+                .pieceProductUuid(ownedPieceAverage.getPieceProductUuid())
                 .build();
     }
 

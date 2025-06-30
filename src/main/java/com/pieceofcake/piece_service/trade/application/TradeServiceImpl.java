@@ -71,7 +71,7 @@ public class TradeServiceImpl implements TradeService {
 
     @Override
     public List<GetAllPieceProductUuidResponseDto> getOwnedPieceProductUuidByMemberUuid(String memberUuid) {
-        List<OwnedPiece> pieces = ownedPieceRepository.findByMemberUuid(memberUuid);
+        List<OwnedPieceAverage> pieces = ownedPieceAverageRepository.findByMemberUuid(memberUuid);
 
         return pieces.stream().map(GetAllPieceProductUuidResponseDto::from).toList();
     }
