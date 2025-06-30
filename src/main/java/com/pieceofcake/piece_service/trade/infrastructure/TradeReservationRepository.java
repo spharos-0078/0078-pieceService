@@ -26,4 +26,6 @@ public interface TradeReservationRepository extends JpaRepository<PieceTradeRese
 
     Optional<PieceTradeReservation> findByReservationUuid(String reservationUuid);
 
+    List<PieceTradeReservation> findByMemberUuid(String memberUuid);
+
 }

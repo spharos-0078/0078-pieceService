@@ -5,9 +5,7 @@ import com.pieceofcake.piece_service.common.exception.BaseException;
 import com.pieceofcake.piece_service.piece.infrastructure.PieceProductRepository;
 import com.pieceofcake.piece_service.piece.infrastructure.PieceRepository;
 import com.pieceofcake.piece_service.trade.dto.in.CreateTradeRequestDto;
-import com.pieceofcake.piece_service.trade.dto.out.GetAllPieceProductUuidResponseDto;
-import com.pieceofcake.piece_service.trade.dto.out.GetOwnedMemberAndPieceQuantityResponseDto;
-import com.pieceofcake.piece_service.trade.dto.out.GetOwnedPieceResponseDto;
+import com.pieceofcake.piece_service.trade.dto.out.*;
 import com.pieceofcake.piece_service.trade.entity.OwnedPiece;
 import com.pieceofcake.piece_service.trade.entity.PieceTradeReservation;
 import com.pieceofcake.piece_service.trade.entity.TradeStatus;
@@ -234,5 +232,22 @@ public class TradeServiceImpl implements TradeService {
         }
 
         reservation.cancel();
+    }
+
+    @Override
+    public List<GetTradeReservationUuidResponseDto> getReservationUuidByMemberUuid(String memberUuid) {
+        List<PieceTradeReservation> uuidList = tradeReservationRepository.findByMemberUuid(memberUuid);
+        return uuidList.stream().map(GetTradeReservationUuidResponseDto::from).toList();
+    }
+
+    @Override
+    public GetTradeReservationResponseDto getReservationByUuid(String memberUuid, String reservationUuid) {
+        PieceTradeReservation reservation = tradeReservationRepository.findByReservationUuid(reservationUuid)
+                .orElseThrow(() -> new BaseException(BaseResponseStatus.NO_EXIST_RESERVATION));
+
+        if(!reservation.getMemberUuid().equals(memberUuid)) {
+            throw new BaseException(BaseResponseStatus.NO_AUTH_RESERVATION);
+        }
+        return GetTradeReservationResponseDto.from(reservation);
     }
 }
