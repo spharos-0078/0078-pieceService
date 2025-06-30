@@ -4,13 +4,17 @@ import com.pieceofcake.piece_service.common.entity.BaseResponseStatus;
 import com.pieceofcake.piece_service.common.exception.BaseException;
 import com.pieceofcake.piece_service.kafka.event.PieceEvent;
 import com.pieceofcake.piece_service.kafka.producer.PieceKafkaProducer;
+import com.pieceofcake.piece_service.piece.dto.in.CreatePieceProductLikeRequestDto;
 import com.pieceofcake.piece_service.piece.dto.in.CreatePieceProductRequestDto;
 import com.pieceofcake.piece_service.piece.dto.in.GetPieceProductUuidListRequestDto;
 import com.pieceofcake.piece_service.piece.dto.in.UpdatePieceProductRequestDto;
+import com.pieceofcake.piece_service.piece.dto.out.GetLikedPieceProductResponseDto;
 import com.pieceofcake.piece_service.piece.dto.out.GetMarketPriceResponseDto;
 import com.pieceofcake.piece_service.piece.dto.out.GetPieceProductUuidListResponseDto;
+import com.pieceofcake.piece_service.piece.entity.LikedPieceProduct;
 import com.pieceofcake.piece_service.piece.entity.PieceProduct;
 import com.pieceofcake.piece_service.piece.entity.PieceStatus;
+import com.pieceofcake.piece_service.piece.infrastructure.LikedPieceProductRepository;
 import com.pieceofcake.piece_service.piece.infrastructure.PieceProductCustomImplRepository;
 import com.pieceofcake.piece_service.piece.infrastructure.PieceProductRepository;
 import com.pieceofcake.piece_service.piece.vo.out.GetMarketPriceResponseVo;
@@ -20,6 +24,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
+import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @RequiredArgsConstructor
@@ -28,6 +34,7 @@ public class PieceProductServiceImpl implements PieceProductService {
     private final PieceProductRepository pieceProductRepository;
     private final PieceProductCustomImplRepository pieceProductCustomRepository;
     private final PieceKafkaProducer pieceKafkaProducer;
+    private final LikedPieceProductRepository likedPieceProductRepository;
 
     @Transactional
     @Override
@@ -82,5 +89,28 @@ public class PieceProductServiceImpl implements PieceProductService {
                 .orElseThrow(() -> new BaseException(BaseResponseStatus.NO_EXIST_PIECE_PRODUCT)).getMarketPrice();
 
         return GetMarketPriceResponseDto.from(pieceProductUuid, GetMarketPriceResponseVo.builder().marketPrice(marketPrice).build());
+    }
+
+    @Override
+    public void likePieceProduct(CreatePieceProductLikeRequestDto createPieceProductLikeRequestDto) {
+        Optional<LikedPieceProduct> likePieceProduct = likedPieceProductRepository.findByPieceProductUuidAndMemberUuid(
+                createPieceProductLikeRequestDto.getPieceProductUuid(), createPieceProductLikeRequestDto.getMemberUuid()
+        );
+        if(likePieceProduct.isPresent()) {
+            likedPieceProductRepository.delete(likePieceProduct.get());
+        } else {
+            likedPieceProductRepository.save(createPieceProductLikeRequestDto.toEntity());
+        }
+    }
+
+    @Override
+    public List<GetLikedPieceProductResponseDto> getLikedPieceProductList(String memberUuid) {
+        return likedPieceProductRepository.getLikedPieceProductByMemberUuid(memberUuid)
+                .stream().map(GetLikedPieceProductResponseDto::from).toList();
+    }
+
+    @Override
+    public Boolean isLikedPieceProduct(String pieceProductUuid, String memberUuid) {
+        return likedPieceProductRepository.existsByPieceProductUuidAndMemberUuid(pieceProductUuid, memberUuid);
     }
 }
