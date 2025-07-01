@@ -31,7 +31,7 @@ public class PieceProduct extends BaseEntity {
 
     @Builder.Default
     @Column(name = "is_trading", nullable = false)
-    Boolean isTrading = false;
+    Boolean isTrading = true;
 
     @Builder.Default
     @Column(name = "is_deleted", nullable = false)
