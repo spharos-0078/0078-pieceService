@@ -39,6 +39,7 @@ public class CreatePieceProductRequestDto {
                 .pieceProductUuid(pieceProductUuid)
                 .productUuid(productUuid)
                 .marketPrice(marketPrice)
+                .totalPieces(totalPieces)
                 .build();
     }
 }
