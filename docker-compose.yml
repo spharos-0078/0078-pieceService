@@ -1,7 +1,7 @@
 version: "3.8"
 
 services:
-  board-service:
+  piece-service:
     container_name: piece-service
     image: ${DOCKER_USERNAME}/piece-service:latest
     ports:
