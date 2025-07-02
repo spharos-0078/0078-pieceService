@@ -9,7 +9,6 @@ import com.pieceofcake.piece_service.trade.dto.out.*;
 import com.pieceofcake.piece_service.trade.entity.OwnedPiece;
 import com.pieceofcake.piece_service.trade.entity.OwnedPieceAverage;
 import com.pieceofcake.piece_service.trade.entity.PieceTradeReservation;
-import com.pieceofcake.piece_service.trade.entity.TradeStatus;
 import com.pieceofcake.piece_service.trade.infrastructure.OwnedPieceAverageRepository;
 import com.pieceofcake.piece_service.trade.infrastructure.OwnedPieceRepository;
 import com.pieceofcake.piece_service.trade.infrastructure.TradeReservationRepository;
@@ -19,14 +18,12 @@ import com.pieceofcake.piece_service.trade.infrastructure.feign.dto.ReadMoneyAmo
 import com.pieceofcake.piece_service.trade.infrastructure.redis.RedisPublisher;
 import com.pieceofcake.piece_service.trade.scheduler.TradingTimeChecker;
 import com.pieceofcake.piece_service.trade.util.PriceStepValidator;
-import com.pieceofcake.piece_service.trade.vo.out.GetPieceAverageResponseVo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
