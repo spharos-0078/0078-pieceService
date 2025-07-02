@@ -49,18 +49,18 @@ public class PieceProductController {
         return new BaseResponseEntity<>(BaseResponseStatus.SUCCESS);
     }
 
-    @Operation(summary = "조각 상품 uuid list 조회")
-    @GetMapping("/uuid-list")
-    public BaseResponseEntity<GetPieceProductUuidListResponseVo> getPieceProductUuidList(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(value = "isTrading", required = false) Boolean isTrading
-    ) {
-        return new BaseResponseEntity<>(
-                pieceProductService.getPieceProductUuidList(GetPieceProductUuidListRequestDto.of(page, size, isTrading))
-                        .toVo()
-        );
-    }
+//    @Operation(summary = "조각 상품 uuid list 조회")
+//    @GetMapping("/uuid-list")
+//    public BaseResponseEntity<GetPieceProductUuidListResponseVo> getPieceProductUuidList(
+//            @RequestParam(defaultValue = "0") int page,
+//            @RequestParam(defaultValue = "10") int size,
+//            @RequestParam(value = "isTrading", required = false) Boolean isTrading
+//    ) {
+//        return new BaseResponseEntity<>(
+//                pieceProductService.getPieceProductUuidList(GetPieceProductUuidListRequestDto.of(page, size, isTrading))
+//                        .toVo()
+//        );
+//    }
 
     @Operation(summary = "조각 상품 시장가 조회")
     @GetMapping("/market-price/{pieceProductUuid}")
