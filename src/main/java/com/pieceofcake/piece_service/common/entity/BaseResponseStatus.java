@@ -126,6 +126,17 @@ public enum BaseResponseStatus {
     ALREADY_COMPLETED_RESERVATION(HttpStatus.BAD_REQUEST, false, 6003, "이미 체결된 예약은 취소할 수 없습니다"),
     NO_AUTH_RESERVATION(HttpStatus.FORBIDDEN, false, 6004, "해당 예약을 취소할 권한이 없습니다."),
     NO_OWNED_PIECE_AVERAGE(HttpStatus.NOT_FOUND, false, 6005, "보유한 평균단가 정보가 없습니다."),
+    
+    // Trade Service 추가 상태
+    NO_RESERVATION_FOUND(HttpStatus.NOT_FOUND, false, 6006, "예약을 찾을 수 없습니다."),
+    UNAUTHORIZED_ACCESS(HttpStatus.FORBIDDEN, false, 6007, "접근 권한이 없습니다."),
+    TRADING_TIME_NOT_AVAILABLE(HttpStatus.BAD_REQUEST, false, 6008, "현재는 거래 가능한 시간이 아닙니다."),
+    NO_PIECE_PRODUCT_FOUND(HttpStatus.NOT_FOUND, false, 6009, "존재하지 않는 조각상품입니다."),
+    INVALID_PRICE_STEP(HttpStatus.BAD_REQUEST, false, 6010, "유효하지 않은 호가 단위입니다."),
+    INSUFFICIENT_BALANCE(HttpStatus.BAD_REQUEST, false, 6011, "예치금이 부족합니다."),
+    INSUFFICIENT_PIECES(HttpStatus.BAD_REQUEST, false, 6012, "보유 조각이 부족합니다."),
+    INVALID_PIECE(HttpStatus.BAD_REQUEST, false, 6013, "유효하지 않은 조각입니다."),
+    PAYMENT_SERVICE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, false, 6014, "결제 서비스 오류가 발생했습니다."),
 
     /**
      * 6000: gpt-api error

@@ -68,5 +68,12 @@ public class PieceTradeReservation extends BaseEntity {
         }
     }
 
+    public void restoreQuantity(int quantity) {
+        this.remainingQuantity += quantity;
+        if (this.tradeStatus == TradeStatus.COMPLETED) {
+            this.tradeStatus = TradeStatus.WAITING;
+        }
+    }
+
     public void cancel() { this.tradeStatus = TradeStatus.CANCELED; }
 }

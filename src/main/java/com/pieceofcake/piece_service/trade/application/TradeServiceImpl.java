@@ -21,15 +21,16 @@ import com.pieceofcake.piece_service.trade.scheduler.TradingTimeChecker;
 import com.pieceofcake.piece_service.trade.util.PriceStepValidator;
 import com.pieceofcake.piece_service.trade.vo.out.GetPieceAverageResponseVo;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class TradeServiceImpl implements TradeService {
@@ -43,7 +44,6 @@ public class TradeServiceImpl implements TradeService {
     private final RedisPublisher redisPublisher;
     private final RedisTemplate<String, String> redisTemplate;
     private final OrderbookSummaryService orderbookSummaryService;
-
     private final TradingTimeChecker tradingTimeChecker;
     private final PieceProductRepository pieceProductRepository;
 
@@ -70,9 +70,62 @@ public class TradeServiceImpl implements TradeService {
     }
 
     @Override
+    public GetOwnedPieceResponseDto getOwnedPieceByMemberAndProductUuid(String memberUuid, String pieceProductUuid) {
+        Long count = ownedPieceRepository.countByMemberUuidAndPieceProductUuid(memberUuid, pieceProductUuid);
+        return new GetOwnedPieceResponseDto(pieceProductUuid, count.intValue());
+    }
+
+    /** 매수 예약 등록 **/
+    @Transactional
+    @Override
+    public void createBuyReservation(String memberUuid, CreateTradeRequestDto createTradeRequestDto) {
+        // 1. 거래 가능 시간 검증
+        validateTradingTime();
+        
+        // 2. 가격 검증
+        validatePrice(createTradeRequestDto);
+        
+        // 3. 예치금 검증
+        validateBalance(memberUuid, createTradeRequestDto);
+        
+        // 4. 예약 등록
+        PieceTradeReservation buyReservation = createTradeRequestDto.toBuyEntity(memberUuid);
+        tradeReservationRepository.save(buyReservation);
+        
+        // 5. Redis 이벤트 발행
+        publishOrderBookEvents(buyReservation);
+        
+        // 6. 매칭 시도
+        matchingService.match(buyReservation);
+    }
+
+    /** 매도 예약 등록 */
+    @Transactional
+    @Override
+    public void createSellReservation(String memberUuid, CreateTradeRequestDto createTradeRequestDto) {
+        // 1. 거래 가능 시간 검증
+        validateTradingTime();
+        
+        // 2. 가격 검증
+        validatePrice(createTradeRequestDto);
+        
+        // 3. 보유 조각 검증
+        validateOwnedPieces(memberUuid, createTradeRequestDto);
+        
+        // 4. 예약 등록
+        PieceTradeReservation sellReservation = createTradeRequestDto.toSellEntity(memberUuid);
+        tradeReservationRepository.save(sellReservation);
+        
+        // 5. Redis 이벤트 발행
+        publishOrderBookEvents(sellReservation);
+        
+        // 6. 매칭 시도
+        matchingService.match(sellReservation);
+    }
+
+    @Override
     public List<GetAllPieceProductUuidResponseDto> getOwnedPieceProductUuidByMemberUuid(String memberUuid) {
         List<OwnedPieceAverage> pieces = ownedPieceAverageRepository.findByMemberUuid(memberUuid);
-
         return pieces.stream().map(GetAllPieceProductUuidResponseDto::from).toList();
     }
 
@@ -85,182 +138,113 @@ public class TradeServiceImpl implements TradeService {
         return GetPieceAverageResponseDto.from(ownedPieceAverage);
     }
 
-    @Override
-    public GetOwnedPieceResponseDto getOwnedPieceByMemberAndProductUuid(String memberUuid, String pieceProductUuid) {
-        Long count = ownedPieceRepository.countByMemberUuidAndPieceProductUuid(memberUuid, pieceProductUuid);
-        return new GetOwnedPieceResponseDto(pieceProductUuid, count.intValue());
-    }
-
-    /** 매수 예약 등록 **/
-    @Transactional
-    @Override
-    public void createBuyReservation(String memberUuid, CreateTradeRequestDto createTradeRequestDto) {
-        // 거래 가능 시간 검증
-        if (!tradingTimeChecker.isMarketOpen()) {
-            throw new IllegalStateException("현재는 거래 가능한 시간이 아닙니다.");
-        }
-
-        String pieceProductUuid = createTradeRequestDto.getPieceProductUuid();
-        long price = createTradeRequestDto.getRegisteredPrice();
-
-        // 현재가 조회
-        String lastPriceStr = redisTemplate
-                .opsForValue()
-                .get("pieceLastPrice:" + pieceProductUuid);
-        if (lastPriceStr == null) {
-            lastPriceStr = pieceProductRepository.findByPieceProductUuid(pieceProductUuid)
-                    .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 조각상품입니다."))
-                    .getMarketPrice().toString();
-        }
-        long currentPrice = Long.parseLong(lastPriceStr);
-
-        // 호가 단위 검증
-        if (!PriceStepValidator.isValidPrice(price, currentPrice)) {
-            long step = PriceStepValidator.getPriceStep(price);
-            throw new IllegalArgumentException("해당 가격대의 호가 단위는 " + step + "원이며, 현재가는 " + currentPrice + "원입니다.");
-        }
-
-        long totalPrice = createTradeRequestDto.getRegisteredPrice() * createTradeRequestDto.getDesiredQuantity();
-        long currentAmount = getAvailableAmount(memberUuid);
-
-        if(currentAmount < totalPrice) {
-            throw new IllegalArgumentException("예치금이 부족합니다.");
-        }
-
-        // 2. 예약 등록
-        PieceTradeReservation buyReservation = createTradeRequestDto.toBuyEntity(memberUuid);
-        tradeReservationRepository.save(buyReservation);
-
-        // Redis에 예약 전송
-        redisPublisher.publishOrderBook(buyReservation.getPieceProductUuid(), buyReservation.getRegisteredPrice(),
-                buyReservation.getDesiredQuantity(), buyReservation.getTradeType().name());
-
-        // 최신 호가 요약 생성
-        Map<String, Object> summary = orderbookSummaryService.buildOrderbookSummary(buyReservation.getPieceProductUuid());
-
-        // ✅ 예약 이벤트 발행 (공통 메서드 사용)
-//        redisPublisher.publishTradeReservedEvent(
-//                "BUY", memberUuid,
-//                buyReservation.getPieceProductUuid(),
-//                buyReservation.getRegisteredPrice(),
-//                buyReservation.getDesiredQuantity(),
-//                buyReservation.getCreatedAt()
-//        );
-        redisPublisher.publishOrderbookSummary(buyReservation.getPieceProductUuid(), summary);
-
-        // 3. 체결 시도
-        matchingService.match(buyReservation);
-
-    }
-
-    /** 매도 예약 등록 */
-    @Transactional
-    @Override
-    public void createSellReservation(String memberUuid, CreateTradeRequestDto createTradeRequestDto) {
-        // 거래 가능 시간 검증
-        if (!tradingTimeChecker.isMarketOpen()) {
-            throw new IllegalStateException("현재는 거래 가능한 시간이 아닙니다.");
-        }
-
-        String pieceProductUuid = createTradeRequestDto.getPieceProductUuid();
-        long price = createTradeRequestDto.getRegisteredPrice();
-
-        // 현재가 조회
-        String lastPriceStr = redisTemplate
-                .opsForValue()
-                .get("pieceLastPrice:" + pieceProductUuid);
-        if (lastPriceStr == null) {
-            lastPriceStr = pieceProductRepository.findByPieceProductUuid(pieceProductUuid)
-                    .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 조각상품입니다."))
-                    .getMarketPrice().toString();
-        }
-        long currentPrice = Long.parseLong(lastPriceStr);
-
-        // 호가 단위 검증
-        if (!PriceStepValidator.isValidPrice(price, currentPrice)) {
-            long step = PriceStepValidator.getPriceStep(price);
-            throw new IllegalArgumentException("해당 가격대의 호가 단위는 " + step + "원이며, 현재가는 " + currentPrice + "원입니다.");
-        }
-
-        // 1. 보유 조각 검증
-        List<OwnedPiece> ownedPieces = ownedPieceRepository
-                .findByMemberUuidAndPieceProductUuid(memberUuid, createTradeRequestDto.getPieceProductUuid());
-
-        if(ownedPieces.size() < createTradeRequestDto.getDesiredQuantity()) {
-            throw new IllegalArgumentException("보유 조각이 부족합니다.");
-        }
-
-        // 2. 조각 유효성 검증
-        for(OwnedPiece piece: ownedPieces) {
-            if(!pieceRepository.existsByPieceUuid(piece.getPieceUuid())) {
-                throw new IllegalArgumentException("존재하지 않는 조각입니다.");
-            }
-        }
-
-        // 3. 예약 생성 (dto에 위임)
-        PieceTradeReservation sellReservation = createTradeRequestDto.toSellEntity(memberUuid);
-        tradeReservationRepository.save(sellReservation);
-
-        // Redis에 예약 전송
-        redisPublisher.publishOrderBook(sellReservation.getPieceProductUuid(), sellReservation.getRegisteredPrice(),
-                sellReservation.getDesiredQuantity(), sellReservation.getTradeType().name());
-
-        // 최신 호가 요약 생성
-        Map<String, Object> summary = orderbookSummaryService.buildOrderbookSummary(sellReservation.getPieceProductUuid());
-
-        redisPublisher.publishOrderbookSummary(sellReservation.getPieceProductUuid(), summary);
-
-//        // ✅ 예약 이벤트 발행 (공통 메서드 사용)
-//        redisPublisher.publishTradeReservedEvent(
-//                "SELL", memberUuid,
-//                sellReservation.getPieceProductUuid(),
-//                sellReservation.getRegisteredPrice(),
-//                sellReservation.getDesiredQuantity(),
-//                sellReservation.getCreatedAt()
-//        );
-
-        // 4. 체결 시도
-        matchingService.match(sellReservation);
-    }
-
-    private long getAvailableAmount(String memberUuid) {
-        BaseResponse<ReadMoneyAmountResponseDto> amount = paymentFeignClient.getMoney(memberUuid);
-        return amount.getResult().getAmount();
-    }
-
     @Transactional
     @Override
     public void cancelReservation(String memberUuid, String reservationUuid) {
-        PieceTradeReservation reservation = tradeReservationRepository.findByReservationUuid(reservationUuid)
-                .orElseThrow(() -> new BaseException(BaseResponseStatus.NO_EXIST_RESERVATION));
+        PieceTradeReservation reservation = tradeReservationRepository
+                .findByReservationUuid(reservationUuid)
+                .orElseThrow(() -> new BaseException(BaseResponseStatus.NO_RESERVATION_FOUND));
 
-        // 본인 예약이 아닌 경우 예외
         if (!reservation.getMemberUuid().equals(memberUuid)) {
-            throw new BaseException(BaseResponseStatus.NO_AUTH_RESERVATION);
-        }
-
-        // 이미 완료된 거래는 취소 불가
-        if (reservation.getTradeStatus() == TradeStatus.COMPLETED) {
-            throw new BaseException(BaseResponseStatus.ALREADY_COMPLETED_RESERVATION);
+            throw new BaseException(BaseResponseStatus.UNAUTHORIZED_ACCESS);
         }
 
         reservation.cancel();
+        tradeReservationRepository.save(reservation);
+        
+        log.info("예약 취소 완료: reservationUuid={}, memberUuid={}", reservationUuid, memberUuid);
     }
 
     @Override
     public List<GetTradeReservationUuidResponseDto> getReservationUuidByMemberUuid(String memberUuid) {
-        List<PieceTradeReservation> uuidList = tradeReservationRepository.findByMemberUuid(memberUuid);
-        return uuidList.stream().map(GetTradeReservationUuidResponseDto::from).toList();
+        List<PieceTradeReservation> reservations = tradeReservationRepository.findByMemberUuid(memberUuid);
+        return reservations.stream()
+                .map(GetTradeReservationUuidResponseDto::from)
+                .toList();
     }
 
     @Override
     public GetTradeReservationResponseDto getReservationByUuid(String memberUuid, String reservationUuid) {
-        PieceTradeReservation reservation = tradeReservationRepository.findByReservationUuid(reservationUuid)
-                .orElseThrow(() -> new BaseException(BaseResponseStatus.NO_EXIST_RESERVATION));
+        PieceTradeReservation reservation = tradeReservationRepository
+                .findByReservationUuid(reservationUuid)
+                .orElseThrow(() -> new BaseException(BaseResponseStatus.NO_RESERVATION_FOUND));
 
-        if(!reservation.getMemberUuid().equals(memberUuid)) {
-            throw new BaseException(BaseResponseStatus.NO_AUTH_RESERVATION);
+        if (!reservation.getMemberUuid().equals(memberUuid)) {
+            throw new BaseException(BaseResponseStatus.UNAUTHORIZED_ACCESS);
         }
+
         return GetTradeReservationResponseDto.from(reservation);
+    }
+
+    // Private validation methods
+    private void validateTradingTime() {
+        if (!tradingTimeChecker.isMarketOpen()) {
+            throw new BaseException(BaseResponseStatus.TRADING_TIME_NOT_AVAILABLE);
+        }
+    }
+
+    private void validatePrice(CreateTradeRequestDto createTradeRequestDto) {
+        String pieceProductUuid = createTradeRequestDto.getPieceProductUuid();
+        long price = createTradeRequestDto.getRegisteredPrice();
+
+        // 현재가 조회
+        String lastPriceStr = redisTemplate.opsForValue().get("pieceLastPrice:" + pieceProductUuid);
+        if (lastPriceStr == null) {
+            lastPriceStr = pieceProductRepository.findByPieceProductUuid(pieceProductUuid)
+                    .orElseThrow(() -> new BaseException(BaseResponseStatus.NO_PIECE_PRODUCT_FOUND))
+                    .getMarketPrice().toString();
+        }
+        long currentPrice = Long.parseLong(lastPriceStr);
+
+        // 호가 단위 검증
+        if (!PriceStepValidator.isValidPrice(price, currentPrice)) {
+            long step = PriceStepValidator.getPriceStep(price);
+            throw new BaseException(BaseResponseStatus.INVALID_PRICE_STEP);
+        }
+    }
+
+    private void validateBalance(String memberUuid, CreateTradeRequestDto createTradeRequestDto) {
+        long totalPrice = createTradeRequestDto.getRegisteredPrice() * createTradeRequestDto.getDesiredQuantity();
+        long currentAmount = getAvailableAmount(memberUuid);
+
+        if (currentAmount < totalPrice) {
+            throw new BaseException(BaseResponseStatus.INSUFFICIENT_BALANCE);
+        }
+    }
+
+    private void validateOwnedPieces(String memberUuid, CreateTradeRequestDto createTradeRequestDto) {
+        List<OwnedPiece> ownedPieces = ownedPieceRepository
+                .findByMemberUuidAndPieceProductUuid(memberUuid, createTradeRequestDto.getPieceProductUuid());
+
+        if (ownedPieces.size() < createTradeRequestDto.getDesiredQuantity()) {
+            throw new BaseException(BaseResponseStatus.INSUFFICIENT_PIECES);
+        }
+
+        // 조각 유효성 검증
+        for (OwnedPiece piece : ownedPieces) {
+            if (!pieceRepository.existsByPieceUuid(piece.getPieceUuid())) {
+                throw new BaseException(BaseResponseStatus.INVALID_PIECE);
+            }
+        }
+    }
+
+    private void publishOrderBookEvents(PieceTradeReservation reservation) {
+        // Redis에 예약 전송
+        redisPublisher.publishOrderBook(reservation.getPieceProductUuid(), reservation.getRegisteredPrice(),
+                reservation.getDesiredQuantity(), reservation.getTradeType().name());
+
+        // 최신 호가 요약 생성
+        Map<String, Object> summary = orderbookSummaryService.buildOrderbookSummary(reservation.getPieceProductUuid());
+        redisPublisher.publishOrderbookSummary(reservation.getPieceProductUuid(), summary);
+    }
+
+    private long getAvailableAmount(String memberUuid) {
+        try {
+            BaseResponse<ReadMoneyAmountResponseDto> response = paymentFeignClient.getMoney(memberUuid);
+            return response.getResult().getAmount();
+        } catch (Exception e) {
+            log.error("예치금 조회 실패: memberUuid={}", memberUuid, e);
+            throw new BaseException(BaseResponseStatus.PAYMENT_SERVICE_ERROR);
+        }
     }
 }
