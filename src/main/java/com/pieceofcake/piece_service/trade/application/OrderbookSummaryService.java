@@ -45,14 +45,14 @@ public class OrderbookSummaryService {
         for (int i = 1; i <= 10; i++) {
             long price = lastPrice + step * i;
             askp.add(price);
-            askpRsqn.add(getOrderbookQuantity(pieceUuid, price, "SELL"));
+            askpRsqn.add(getOrderbookQuantity(pieceUuid, price, "SELL".toLowerCase()));
         }
 
         // 3) 매수 호가 bid: 체결가 기준 아래로 10개
         for (int i = 1; i <= 10; i++) {
             long price = lastPrice - step * i;
             bidp.add(price);
-            bidRsqn.add(getOrderbookQuantity(pieceUuid, price, "BUY"));
+            bidRsqn.add(getOrderbookQuantity(pieceUuid, price, "BUY".toLowerCase()));
         }
 
         Map<String, Object> response = new HashMap<>();

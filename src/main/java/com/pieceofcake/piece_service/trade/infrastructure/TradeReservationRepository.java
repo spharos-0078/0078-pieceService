@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface TradeReservationRepository extends JpaRepository<PieceTradeReservation, Long> {
 
@@ -22,5 +23,9 @@ public interface TradeReservationRepository extends JpaRepository<PieceTradeRese
     );
 
     List<PieceTradeReservation> findByTradeStatus(TradeStatus tradeStatus);
+
+    Optional<PieceTradeReservation> findByReservationUuid(String reservationUuid);
+
+    List<PieceTradeReservation> findByMemberUuid(String memberUuid);
 
 }

@@ -24,10 +24,6 @@ public interface OwnedPieceRepository extends JpaRepository<OwnedPiece, Long> {
 
     Long countByMemberUuidAndPieceProductUuid(String memberUuid, String pieceProductUuid);
 
-    Optional<OwnedPiece> findByPieceUuid(String pieceUuid);
-
-    List<OwnedPiece> findByMemberUuid(String memberUuid);
-
     @Query("SELECT o.memberUuid, COUNT(o) " +
             "FROM OwnedPiece o " +
             "WHERE o.pieceProductUuid = :pieceProductUuid " +
