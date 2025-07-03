@@ -30,7 +30,6 @@ public class OrderbookSummaryService {
             lastPriceStr = pieceProductRepository.findByPieceProductUuid(pieceUuid).orElseThrow(
                     () -> new BaseException(BaseResponseStatus.NO_EXIST_PIECE_PRODUCT)
             ).getMarketPrice().toString();
-//            throw new IllegalStateException("체결가 없음");
         }
 
         long lastPrice = Long.parseLong(lastPriceStr);
@@ -41,18 +40,21 @@ public class OrderbookSummaryService {
         List<Long> askpRsqn = new ArrayList<>();
         List<Long> bidRsqn = new ArrayList<>();
 
-        // 2) 매도 호가 ask: 체결가 기준 위로 10개
-        for (int i = 1; i <= 10; i++) {
+        // 2) 매도 호가 ask: 총 10개 (첫 번째는 시장가, 나머지 9개는 step 간격)
+        askp.add(lastPrice); // 시장가 포함
+        askpRsqn.add(getOrderbookQuantity(pieceUuid, lastPrice, "sell"));
+
+        for (int i = 1; i < 10; i++) { // i=1~9 → 총 9개 추가, 총 10개 맞춤
             long price = lastPrice + step * i;
             askp.add(price);
-            askpRsqn.add(getOrderbookQuantity(pieceUuid, price, "SELL".toLowerCase()));
+            askpRsqn.add(getOrderbookQuantity(pieceUuid, price, "sell"));
         }
 
-        // 3) 매수 호가 bid: 체결가 기준 아래로 10개
+        // 3) 매수 호가 bid: 총 10개 (체결가 기준 아래로 10개)
         for (int i = 1; i <= 10; i++) {
             long price = lastPrice - step * i;
             bidp.add(price);
-            bidRsqn.add(getOrderbookQuantity(pieceUuid, price, "BUY".toLowerCase()));
+            bidRsqn.add(getOrderbookQuantity(pieceUuid, price, "buy"));
         }
 
         Map<String, Object> response = new HashMap<>();

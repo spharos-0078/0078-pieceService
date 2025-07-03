@@ -228,7 +228,7 @@ public class MatchingServiceImpl implements MatchingService {
         pubsubPayload.put("matchedQuantity", matchedQuantity);
         pubsubPayload.put("matchedTime", matchedTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
 
-        redisPublisher.publishRedisEvent("trade-matched", pubsubPayload);
+        redisPublisher.publishMatchedEvent(reservation.getPieceProductUuid(), pubsubPayload);
     }
 
     /** 가능한 체결 수량 = 두 주문의 ‘남은 수량’ 중 더 작은 값 */
