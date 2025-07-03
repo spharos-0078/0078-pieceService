@@ -25,6 +25,9 @@ public enum BaseResponseStatus {
     FAILED_TO_RESTORE(HttpStatus.INTERNAL_SERVER_ERROR, false, 405, "계정 복구에 실패했습니다. 관리자에게 문의해주세요."),
     NO_EXIST_OAUTH(HttpStatus.NOT_FOUND, false, 406, "소셜 로그인 정보가 존재하지 않습니다."),
 
+    // DB 에러
+    FAILED_TO_INSERT_DB(HttpStatus.INTERNAL_SERVER_ERROR, false, 500, "데이터베이스 오류가 발생했습니다."),
+
     /**
      * 900: 기타 에러
      */
