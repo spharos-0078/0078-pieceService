@@ -187,8 +187,10 @@ public enum BaseResponseStatus {
 
     // 기획전(이벤트)
     NO_EXIST_EVENT(HttpStatus.NOT_FOUND, false, 20040, "기획전 정보가 존재하지 않습니다."),
-    NO_EXIST_PRODUCT_EVENT(HttpStatus.NOT_FOUND, false, 20041, "상품 기획전 정보가 존재하지 않습니다.");
+    NO_EXIST_PRODUCT_EVENT(HttpStatus.NOT_FOUND, false, 20041, "상품 기획전 정보가 존재하지 않습니다."),
 
+    // 조각
+    NO_ENOUGH_EXIST_PIECE(HttpStatus.BAD_REQUEST, false, 20100, "요청한 수량만큼의 조각이 존재하지 않습니다.");
 
     private final HttpStatusCode httpStatusCode;
     private final boolean isSuccess;
