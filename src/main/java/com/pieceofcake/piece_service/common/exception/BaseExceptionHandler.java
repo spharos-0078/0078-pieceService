@@ -3,6 +3,8 @@ package com.pieceofcake.piece_service.common.exception;
 import com.pieceofcake.piece_service.common.entity.BaseResponseEntity;
 import com.pieceofcake.piece_service.common.entity.BaseResponseStatus;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataAccessException;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -78,5 +80,12 @@ public class BaseExceptionHandler {
         return new ResponseEntity<>(response, response.httpStatus());
     }
 
+    @ExceptionHandler(DataAccessException.class)
+    public ResponseEntity<BaseResponseEntity<Void>> handleDataAccessException(DataAccessException ex) {
+        // DB 관련 예외의 경우 서버 오류로 간주해 응답
+        return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new BaseResponseEntity<>(BaseResponseStatus.FAILED_TO_INSERT_DB));
+    }
 
 }
