@@ -1,11 +1,14 @@
 package com.pieceofcake.piece_service.piece.infrastructure;
 
 import com.pieceofcake.piece_service.piece.entity.Piece;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+
 import java.util.List;
 
 public interface PieceRepository extends JpaRepository<Piece, Long> {
@@ -23,4 +26,13 @@ public interface PieceRepository extends JpaRepository<Piece, Long> {
     void deleteAllByProductUuid(String productUuid);
 
     List<Piece> findByProductUuid(String productUuid);
+
+    Long countByProductUuidAndMemberUuidIsNull(String productUuid);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    List<Piece> findByProductUuidAndMemberUuidIsNullOrderByIdAsc(
+            String productUuid,
+            Pageable pageable
+    );
+
 }
