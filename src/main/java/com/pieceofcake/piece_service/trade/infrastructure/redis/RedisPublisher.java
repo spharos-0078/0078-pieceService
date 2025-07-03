@@ -126,13 +126,12 @@ public class RedisPublisher {
 
     public void publishOrderbookSummary(String pieceUuid, Map<String, Object> summary) {
         String channel = "piece.orderbook." + pieceUuid;
-        try {
-            String json = objectMapper.writeValueAsString(summary);
-            redisTemplate.convertAndSend(channel, json);
-            log.info("[RedisPublisher] OrderbookSummary 발행: channel={}, payload={}", channel, json);
-        } catch (JsonProcessingException e) {
-            log.error("[RedisPublisher] OrderbookSummary 직렬화 실패", e);
-        }
+        publishRedisEvent(channel, summary);
+    }
+
+    public void publishMatchedEvent(String pieceUuid, Map<String, Object> payload) {
+        String channel = "piece.match." + pieceUuid;
+        publishRedisEvent(channel, payload);
     }
 
 }
