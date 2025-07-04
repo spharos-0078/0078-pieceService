@@ -5,7 +5,6 @@ import com.pieceofcake.piece_service.common.entity.BaseResponseStatus;
 import com.pieceofcake.piece_service.piece.application.PieceProductServiceImpl;
 import com.pieceofcake.piece_service.piece.dto.in.CreatePieceProductLikeRequestDto;
 import com.pieceofcake.piece_service.piece.dto.in.CreatePieceProductRequestDto;
-import com.pieceofcake.piece_service.piece.dto.in.GetPieceProductUuidListRequestDto;
 import com.pieceofcake.piece_service.piece.dto.in.UpdatePieceProductRequestDto;
 import com.pieceofcake.piece_service.piece.dto.out.GetLikedPieceProductResponseDto;
 import com.pieceofcake.piece_service.piece.dto.out.GetMarketPriceResponseDto;
@@ -14,14 +13,13 @@ import com.pieceofcake.piece_service.piece.vo.in.CreatePieceProductRequestVo;
 import com.pieceofcake.piece_service.piece.vo.in.UpdatePieceProductRequestVo;
 import com.pieceofcake.piece_service.piece.vo.out.GetLikedPieceProductResponseVo;
 import com.pieceofcake.piece_service.piece.vo.out.GetMarketPriceResponseVo;
-import com.pieceofcake.piece_service.piece.vo.out.GetPieceProductUuidListResponseVo;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@RequestMapping("api/v1/piece/product")
+@RequestMapping("/api/v1/piece/product")
 @RequiredArgsConstructor
 @RestController
 public class PieceProductController {
@@ -86,7 +84,7 @@ public class PieceProductController {
     ) {
         return new BaseResponseEntity<>(
                 pieceProductService.getLikedPieceProductList(memberUuid)
-                .stream().map(GetLikedPieceProductResponseDto::toVo).toList()
+                        .stream().map(GetLikedPieceProductResponseDto::toVo).toList()
         );
     }
 
