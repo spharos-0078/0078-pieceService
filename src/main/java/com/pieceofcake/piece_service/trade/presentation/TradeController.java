@@ -5,18 +5,15 @@ import com.pieceofcake.piece_service.common.entity.BaseResponseStatus;
 import com.pieceofcake.piece_service.trade.application.TradeService;
 import com.pieceofcake.piece_service.trade.dto.in.CreateTradeRequestDto;
 import com.pieceofcake.piece_service.trade.dto.out.*;
-import com.pieceofcake.piece_service.trade.entity.PieceTradeReservation;
-import com.pieceofcake.piece_service.trade.entity.QPieceTradeReservation;
 import com.pieceofcake.piece_service.trade.vo.in.CreateTradeRequestVo;
 import com.pieceofcake.piece_service.trade.vo.out.*;
 import io.swagger.v3.oas.annotations.Operation;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@RequestMapping("api/v1/piece")
+@RequestMapping("/api/v1/piece")
 @RequiredArgsConstructor
 @RestController
 public class TradeController {
