@@ -1,5 +1,7 @@
 package com.pieceofcake.piece_service.trade.application;
 
+import com.pieceofcake.piece_service.kafka.event.AlertKafkaEvent;
+import com.pieceofcake.piece_service.kafka.producer.PieceKafkaProducer;
 import com.pieceofcake.piece_service.piece.infrastructure.PieceProductRepository;
 import com.pieceofcake.piece_service.piece.infrastructure.PieceRepository;
 import com.pieceofcake.piece_service.trade.dto.in.CreateMatchedHistoryRequestDto;
@@ -16,6 +18,8 @@ import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -40,6 +44,8 @@ public class MatchingServiceImpl implements MatchingService {
     private final FailedPaymentLogRepository failedPaymentLogRepository;
     private final OwnedPieceAverageRepository ownedPieceAverageRepository;
     private final PieceProductRepository pieceProductRepository;
+
+    private final PieceKafkaProducer pieceKafkaProducer;
 
     @Transactional
     @Override
@@ -188,7 +194,9 @@ public class MatchingServiceImpl implements MatchingService {
         pieceProductRepository.updateMarketPrice(sell.getPieceProductUuid(), piecePrice);
     }
 
-    /** 보유 조각 소유권 이전 */
+    /**
+     * 보유 조각 소유권 이전
+     */
     private void transferOwnership(OwnedPiece piece, String newOwnerUuid) {
         OwnedPiece newOwnedPiece = TransferPieceOwnershipRequestDto.of(piece, newOwnerUuid).toEntity();
         ownedPieceRepository.save(newOwnedPiece);
@@ -196,7 +204,9 @@ public class MatchingServiceImpl implements MatchingService {
         pieceRepository.updateOwner(piece.getPieceUuid(), newOwnerUuid);
     }
 
-    /** 체결 이력 저장 */
+    /**
+     * 체결 이력 저장
+     */
     private void saveTradeHistory(PieceTradeReservation buy, PieceTradeReservation sell, OwnedPiece piece, String matchedUuid) {
         tradedHistoryRepository.save(CreateTradedHistoryRequestDto.of(
                 buy, piece.getPieceUuid(), TradeType.BUY, buy.getMemberUuid()).toEntity());
@@ -229,14 +239,34 @@ public class MatchingServiceImpl implements MatchingService {
         pubsubPayload.put("matchedTime", matchedTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
 
         redisPublisher.publishMatchedEvent(reservation.getPieceProductUuid(), pubsubPayload);
+
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                pieceKafkaProducer.updatePiecePriceAlertEvent(AlertKafkaEvent.builder()
+                        .key(reservation.getPieceProductUuid())
+                        .message("조각 실시간 거래가가 변동되었습니다")
+                        .memberUuid(null)
+                        .commonAlert(true)
+                        .build()
+                );
+
+                sendTradeAlert(reservation);
+                sendTradeAlert(counter);
+            }
+        });
     }
 
-    /** 가능한 체결 수량 = 두 주문의 ‘남은 수량’ 중 더 작은 값 */
+    /**
+     * 가능한 체결 수량 = 두 주문의 ‘남은 수량’ 중 더 작은 값
+     */
     private int calculateMatchQuantity(PieceTradeReservation a, PieceTradeReservation b) {
         return Math.min(a.getRemainingQuantity(), b.getRemainingQuantity());
     }
 
-    /** 자기 체결 방지 **/
+    /**
+     * 자기 체결 방지
+     **/
     private boolean isSelfTrade(PieceTradeReservation a, PieceTradeReservation b) {
         return a.getMemberUuid().equals(b.getMemberUuid());
     }
@@ -269,5 +299,21 @@ public class MatchingServiceImpl implements MatchingService {
         }
 
         ownedPieceAverageRepository.save(avg);
+    }
+
+
+    private void sendTradeAlert(PieceTradeReservation tradeReservation) {
+        AlertKafkaEvent.AlertKafkaEventBuilder alertBuilder = AlertKafkaEvent.builder()
+                .key(tradeReservation.getPieceProductUuid())
+                .memberUuid(tradeReservation.getMemberUuid())
+                .commonAlert(false);
+
+        if (tradeReservation.getTradeType() == TradeType.BUY) {
+            alertBuilder.message("조각 구매예약이 체결되었습니다");
+            pieceKafkaProducer.sendBuyPieceTradeAlertEvent(alertBuilder.build());
+        } else if (tradeReservation.getTradeType() == TradeType.SELL) {
+            alertBuilder.message("조각 판매예약이 체결되었습니다");
+            pieceKafkaProducer.sendSellPieceTradeAlertEvent(alertBuilder.build());
+        }
     }
 }
