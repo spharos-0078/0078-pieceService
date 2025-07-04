@@ -1,5 +1,6 @@
 package com.pieceofcake.piece_service.kafka.config;
 
+import com.pieceofcake.piece_service.kafka.event.AlertKafkaEvent;
 import com.pieceofcake.piece_service.kafka.event.PieceEvent;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringSerializer;
@@ -40,5 +41,25 @@ public class KafkaProducerConfig {
     @Bean
     public KafkaTemplate<String, PieceEvent> piecekafkaTemplate() {
         return new KafkaTemplate<>(pieceNotification());
+    }
+
+    @Bean
+    public Map<String, Object> alertProducerConfigs() {
+        Map<String, Object> props = new HashMap<>();
+        props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServer);
+        props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
+
+        return props;
+    }
+
+    @Bean
+    public ProducerFactory<String, AlertKafkaEvent> alertNotification() {
+        return new DefaultKafkaProducerFactory<>(alertProducerConfigs());
+    }
+
+    @Bean
+    public KafkaTemplate<String, AlertKafkaEvent> alertkafkaTemplate() {
+        return new KafkaTemplate<>(alertNotification());
     }
 }
