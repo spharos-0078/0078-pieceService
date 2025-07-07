@@ -3,7 +3,7 @@ package com.pieceofcake.piece_service.trade.presentation;
 import com.pieceofcake.piece_service.common.entity.BaseResponseEntity;
 import com.pieceofcake.piece_service.common.entity.BaseResponseStatus;
 import com.pieceofcake.piece_service.trade.application.TradeService;
-import com.pieceofcake.piece_service.trade.application.TradeSseEventService;
+import com.pieceofcake.piece_service.trade.application.sse.TradeSseEventService;
 import com.pieceofcake.piece_service.trade.dto.in.CreateTradeRequestDto;
 import com.pieceofcake.piece_service.trade.dto.out.*;
 import com.pieceofcake.piece_service.trade.vo.in.CreateTradeRequestVo;
@@ -135,7 +135,16 @@ public class TradeController {
             summary = "조각 거래 호가 조회 SSE API",
             description = "Server-Sent Events를 사용하여 실시간으로 호가 정보 업데이트를 스트리밍하는 API입니다.\n\n" +
                     "- path variable로 조각 상품 UUID를 받아 해당 조각상품의 호가 정보 업데이트 이벤트를 실시간으로 제공합니다.\n" +
-                    "- 클라이언트는 이 엔드포인트에 연결하여 가격 변동을 실시간으로 모니터링할 수 있습니다."
+                    "- 클라이언트는 이 엔드포인트에 연결하여 가격 변동을 실시간으로 모니터링할 수 있습니다.\n\n" +
+                    "- 응답 데이터 스키마:\n\n" +
+                    "            - askp: 매도 호가 가격 리스트 (체결가 기준 위로 10단계 가격)\n\n" +
+                    "              예) [1010, 1015, 1020, ...]\n\n" +
+                    "            - bidp: 매수 호가 가격 리스트 (체결가 기준 아래로 10단계 가격)\n\n" +
+                    "              예) [1005, 1000, 995, ...]\n\n" +
+                    "            - askpRsqn: 각 매도 호가 가격에 대응하는 매도 잔량 리스트\n\n" +
+                    "              예) [0, 8, 0, ...]\n\n" +
+                    "            - bidRsqn: 각 매수 호가 가격에 대응하는 매수 잔량 리스트\n\n" +
+                    "              예) [0, 0, 0, ...]"
     )
     @GetMapping(value = "/sse/quotes-update/{pieceProductUuid}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<ServerSentEvent<UpdateQuotesSseDto>> streamPieceTradeQuotes(
@@ -151,7 +160,10 @@ public class TradeController {
             summary = "조각 거래 체결 조회 SSE API",
             description = "Server-Sent Events를 사용하여 실시간으로 현재가(체결가) 업데이트를 스트리밍하는 API입니다.\n\n" +
                     "- path variable로 조각 상품 UUID를 받아 해당 조각상품의 현재가 업데이트 이벤트를 실시간으로 제공합니다.\n" +
-                    "- 클라이언트는 이 엔드포인트에 연결하여 가격 변동을 실시간으로 모니터링할 수 있습니다."
+                    "- 클라이언트는 이 엔드포인트에 연결하여 가격 변동을 실시간으로 모니터링할 수 있습니다.\n\n" +
+                    "- 응답 데이터 스키마:\n\n" +
+                    "            - marketPrice: 체결가\n\n" +
+                    "              예) 1010"
     )
     @GetMapping(value = "/sse/market-price-update/{pieceProductUuid}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<ServerSentEvent<UpdateMarketPriceSseDto>> streamPieceTradeMarketPrice(
