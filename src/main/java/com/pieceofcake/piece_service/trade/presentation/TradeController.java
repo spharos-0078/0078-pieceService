@@ -3,13 +3,17 @@ package com.pieceofcake.piece_service.trade.presentation;
 import com.pieceofcake.piece_service.common.entity.BaseResponseEntity;
 import com.pieceofcake.piece_service.common.entity.BaseResponseStatus;
 import com.pieceofcake.piece_service.trade.application.TradeService;
+import com.pieceofcake.piece_service.trade.application.TradeSseEventService;
 import com.pieceofcake.piece_service.trade.dto.in.CreateTradeRequestDto;
 import com.pieceofcake.piece_service.trade.dto.out.*;
 import com.pieceofcake.piece_service.trade.vo.in.CreateTradeRequestVo;
 import com.pieceofcake.piece_service.trade.vo.out.*;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
+import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Flux;
 
 import java.util.List;
 
@@ -19,6 +23,7 @@ import java.util.List;
 public class TradeController {
 
     private final TradeService tradeService;
+    private final TradeSseEventService tradeSseEventService;
 
     @Operation(summary = "상품별 소유자, 보유조각 전체 조회 (관리자용)")
     @GetMapping("/owned/{pieceProductUuid}/list")
@@ -124,6 +129,38 @@ public class TradeController {
     ) {
         GetTradeReservationResponseDto getTradeReservationResponseDto = tradeService.getReservationByUuid(memberUuid, reservationUuid);
         return new BaseResponseEntity<>(getTradeReservationResponseDto.toVo());
+    }
+
+    @Operation(
+            summary = "조각 거래 호가 조회 SSE API",
+            description = "Server-Sent Events를 사용하여 실시간으로 호가 정보 업데이트를 스트리밍하는 API입니다.\n\n" +
+                    "- path variable로 조각 상품 UUID를 받아 해당 조각상품의 호가 정보 업데이트 이벤트를 실시간으로 제공합니다.\n" +
+                    "- 클라이언트는 이 엔드포인트에 연결하여 가격 변동을 실시간으로 모니터링할 수 있습니다."
+    )
+    @GetMapping(value = "/sse/quotes-update/{pieceProductUuid}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public Flux<ServerSentEvent<UpdateQuotesSseDto>> streamPieceTradeQuotes(
+            @PathVariable("pieceProductUuid") String pieceProductUuid) {
+        return tradeSseEventService.getQuotesUpdatesByPieceProductUuid(pieceProductUuid)
+                .map(event -> ServerSentEvent.<UpdateQuotesSseDto>builder()
+                        .event("quotes-update")
+                        .data(event)
+                        .build());
+    }
+
+    @Operation(
+            summary = "조각 거래 체결 조회 SSE API",
+            description = "Server-Sent Events를 사용하여 실시간으로 현재가(체결가) 업데이트를 스트리밍하는 API입니다.\n\n" +
+                    "- path variable로 조각 상품 UUID를 받아 해당 조각상품의 현재가 업데이트 이벤트를 실시간으로 제공합니다.\n" +
+                    "- 클라이언트는 이 엔드포인트에 연결하여 가격 변동을 실시간으로 모니터링할 수 있습니다."
+    )
+    @GetMapping(value = "/sse/market-price-update/{pieceProductUuid}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public Flux<ServerSentEvent<UpdateMarketPriceSseDto>> streamPieceTradeMarketPrice(
+            @PathVariable("pieceProductUuid") String pieceProductUuid) {
+        return tradeSseEventService.getMatchedUpdatesByPieceProductUuid(pieceProductUuid)
+                .map(event -> ServerSentEvent.<UpdateMarketPriceSseDto>builder()
+                        .event("market-price-update")
+                        .data(event)
+                        .build());
     }
 
 }
