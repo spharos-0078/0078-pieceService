@@ -128,7 +128,11 @@ public class TradeSseEventServiceImpl implements TradeSseEventService {
                     .build();
 
 
-            sink.tryEmitNext(event);
+//            sink.tryEmitNext(event);
+            Sinks.EmitResult result = sink.tryEmitNext(event);
+            if (result.isFailure()) {
+                log.warn("[RedisSubscriber] 초기 호가정보 emit 실패: pieceProductUuid={}, result={}", pieceProductUuid, result);
+            }
             log.info("[RedisSubscriber] 초기 호가정보 송출(build): pieceProductUuid={}, event={}", pieceProductUuid, event);
 
         } catch (Exception e) {

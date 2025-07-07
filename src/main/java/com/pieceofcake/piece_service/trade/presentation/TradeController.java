@@ -10,6 +10,7 @@ import com.pieceofcake.piece_service.trade.vo.in.CreateTradeRequestVo;
 import com.pieceofcake.piece_service.trade.vo.out.*;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.web.bind.annotation.*;
@@ -17,6 +18,7 @@ import reactor.core.publisher.Flux;
 
 import java.util.List;
 
+@Slf4j
 @RequestMapping("/api/v1/piece")
 @RequiredArgsConstructor
 @RestController
@@ -149,11 +151,27 @@ public class TradeController {
     @GetMapping(value = "/sse/quotes-update/{pieceProductUuid}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<ServerSentEvent<UpdateQuotesSseDto>> streamPieceTradeQuotes(
             @PathVariable("pieceProductUuid") String pieceProductUuid) {
-        return tradeSseEventService.getQuotesUpdatesByPieceProductUuid(pieceProductUuid)
+
+        Flux<UpdateQuotesSseDto> flux = tradeSseEventService.getQuotesUpdatesByPieceProductUuid(pieceProductUuid);
+
+        return flux
+                .doOnSubscribe(subscription ->
+                        log.info("[SSE] 구독 시작: pieceProductUuid={}", pieceProductUuid))
+                .doOnCancel(() ->
+                        log.info("[SSE] 구독 취소: pieceProductUuid={}", pieceProductUuid))
+                .doOnComplete(() ->
+                        log.info("[SSE] 구독 정상 종료: pieceProductUuid={}", pieceProductUuid))
+                .doOnError(e ->
+                        log.error("[SSE] 구독 중 에러 발생: pieceProductUuid={}", pieceProductUuid, e))
                 .map(event -> ServerSentEvent.<UpdateQuotesSseDto>builder()
                         .event("quotes-update")
                         .data(event)
                         .build());
+//        return tradeSseEventService.getQuotesUpdatesByPieceProductUuid(pieceProductUuid)
+//                .map(event -> ServerSentEvent.<UpdateQuotesSseDto>builder()
+//                        .event("quotes-update")
+//                        .data(event)
+//                        .build());
     }
 
     @Operation(
