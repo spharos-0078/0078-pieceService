@@ -9,11 +9,11 @@ import lombok.NoArgsConstructor;
 @Data
 @Getter
 @NoArgsConstructor
-public class UpdateMarketPriceSseDto {
-    private String marketPrice;
+public class MarketPriceSerializeDto {
+    private String piecePrice;
 
     @Builder
-    public UpdateMarketPriceSseDto(String marketPrice) {
-        this.marketPrice = marketPrice;
+    public MarketPriceSerializeDto(String piecePrice) {
+        this.piecePrice = piecePrice;
     }
 }

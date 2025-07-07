@@ -1,4 +1,4 @@
-package com.pieceofcake.piece_service.trade.application;
+package com.pieceofcake.piece_service.trade.application.sse;
 
 import com.pieceofcake.piece_service.trade.dto.out.UpdateMarketPriceSseDto;
 import com.pieceofcake.piece_service.trade.dto.out.UpdateQuotesSseDto;

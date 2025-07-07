@@ -1,7 +1,9 @@
-package com.pieceofcake.piece_service.trade.application;
+package com.pieceofcake.piece_service.trade.application.sse;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.pieceofcake.piece_service.trade.application.OrderbookSummaryService;
+import com.pieceofcake.piece_service.trade.dto.out.MarketPriceSerializeDto;
 import com.pieceofcake.piece_service.trade.dto.out.UpdateMarketPriceSseDto;
 import com.pieceofcake.piece_service.trade.dto.out.UpdateQuotesSseDto;
 import com.pieceofcake.piece_service.trade.infrastructure.redis.RedisMessageEvent;
@@ -143,7 +145,8 @@ public class TradeSseEventServiceImpl implements TradeSseEventService {
             String latestTradeJson = stringRedisTemplate.opsForList().index(key, 0);
 
             if (latestTradeJson != null) {
-                UpdateMarketPriceSseDto event = objectMapper.readValue(latestTradeJson, UpdateMarketPriceSseDto.class);
+                MarketPriceSerializeDto dto = objectMapper.readValue(latestTradeJson, MarketPriceSerializeDto.class);
+                UpdateMarketPriceSseDto event = UpdateMarketPriceSseDto.builder().marketPrice(dto.getPiecePrice()).build();
                 sink.tryEmitNext(event);
                 log.info("[RedisSubscriber] 초기 체결정보 송출: pieceProductUuid={}, event={}", pieceProductUuid, event);
             } else {
