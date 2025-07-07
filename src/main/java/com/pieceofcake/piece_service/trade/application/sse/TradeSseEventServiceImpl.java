@@ -14,6 +14,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Sinks;
+import reactor.core.Scannable.Attr;
 
 import java.io.IOException;
 import java.time.LocalDate;
@@ -81,32 +82,81 @@ public class TradeSseEventServiceImpl implements TradeSseEventService {
         return objectMapper.readValue(body, clazz);
     }
 
+    private <T> Flux<T> getOrCreateSinkFlux(Map<String, Sinks.Many<T>> sinkMap,
+                                            String pieceProductUuid,
+                                            BiConsumer<String, Sinks.Many<T>> sendCurrentData) {
+        Sinks.Many<T> sink = sinkMap.compute(pieceProductUuid, (k, existingSink) -> {
+            if (existingSink == null || Boolean.TRUE.equals(existingSink.scan(Attr.TERMINATED))) {
+                log.info("[SSE] 새로운 sink 생성: pieceProductUuid={}", pieceProductUuid);
+                return Sinks.many().replay().latest();  // ✅ replay.latest로 변경
+            }
+            return existingSink;
+        });
+
+        log.info("[SSE] sink 상태: pieceProductUuid={}, subscribers={}, terminated={}",
+                pieceProductUuid, sink.currentSubscriberCount(), sink.scan(Attr.TERMINATED));
+
+        Flux<T> flux = sink.asFlux()
+                .doOnSubscribe(sub ->
+                        log.info("[SSE] 구독 시작: pieceProductUuid={}", pieceProductUuid))
+                .doOnCancel(() -> {
+                    log.info("[SSE] 구독 취소: pieceProductUuid={}", pieceProductUuid);
+                    cleanupSinkIfNoSubscribers(sinkMap, pieceProductUuid, sink);
+                })
+                .doOnComplete(() -> {
+                    log.info("[SSE] 구독 정상 종료: pieceProductUuid={}", pieceProductUuid);
+                    cleanupSinkIfNoSubscribers(sinkMap, pieceProductUuid, sink);
+                })
+                .doOnError(e -> {
+                    if (e instanceof IOException) {
+                        log.info("[SSE] 클라이언트 연결 종료 감지 (무시): pieceProductUuid={}", pieceProductUuid);
+                    } else {
+                        log.error("[SSE] 구독 중 에러 발생: pieceProductUuid={}", pieceProductUuid, e);
+                    }
+                    cleanupSinkIfNoSubscribers(sinkMap, pieceProductUuid, sink);
+                });
+
+        // sink에 초기 데이터 송출
+        sendCurrentData.accept(pieceProductUuid, sink);
+
+        return flux;
+    }
+
     /**
-     * sink에 이벤트를 emit하고 로그를 남김
+     * 구독자 없으면 sink를 제거
+     */
+    private <T> void cleanupSinkIfNoSubscribers(Map<String, Sinks.Many<T>> sinkMap,
+                                                String pieceProductUuid,
+                                                Sinks.Many<T> sink) {
+        int subscribers = sink.currentSubscriberCount();
+        boolean terminated = Boolean.TRUE.equals(sink.scan(Attr.TERMINATED));
+
+        log.info("[SSE] sink 상태 확인: pieceProductUuid={}, subscribers={}, terminated={}",
+                pieceProductUuid, subscribers, terminated);
+
+        if (subscribers == 0) {
+            sinkMap.remove(pieceProductUuid, sink);
+            log.info("[SSE] sink 제거 완료: pieceProductUuid={}", pieceProductUuid);
+        }
+    }
+
+    /**
+     * sink에 emit 시도 후 실패 여부를 로그로 남김
      */
     private <T> void emitToSink(Map<String, Sinks.Many<T>> sinks, String pieceProductUuid, T event, String logPrefix) {
         Sinks.Many<T> sink = sinks.get(pieceProductUuid);
         if (sink != null) {
-            sink.tryEmitNext(event);
-            log.info("{}: pieceProductUuid={}, event={}", logPrefix, pieceProductUuid, event);
+            Sinks.EmitResult result = sink.tryEmitNext(event);
+            if (result.isSuccess()) {
+                log.info("{}: pieceProductUuid={}, event={}", logPrefix, pieceProductUuid, event);
+            } else {
+                log.warn("{} emit 실패: pieceProductUuid={}, result={}", logPrefix, pieceProductUuid, result);
+            }
         } else {
-            log.warn("[RedisSubscriber] sink 없음: pieceProductUuid={}, eventType={}", pieceProductUuid, event.getClass().getSimpleName());
+            log.warn("[SSE] sink 없음: pieceProductUuid={}, eventType={}", pieceProductUuid, event.getClass().getSimpleName());
         }
     }
 
-
-    /**
-     * sink를 생성/조회하고, 최초 데이터 송출 후 Flux 반환
-     */
-    private <T> Flux<T> getOrCreateSinkFlux(Map<String, Sinks.Many<T>> sinkMap,
-                                            String pieceProductUuid,
-                                            BiConsumer<String, Sinks.Many<T>> sendCurrentData) {
-        Sinks.Many<T> sink = sinkMap.computeIfAbsent(pieceProductUuid,
-                k -> Sinks.many().multicast().onBackpressureBuffer());
-
-        sendCurrentData.accept(pieceProductUuid, sink);
-        return sink.asFlux();
-    }
 
     /**
      * 최초 접속 시 Redis에 저장된 최신 호가정보 송출
