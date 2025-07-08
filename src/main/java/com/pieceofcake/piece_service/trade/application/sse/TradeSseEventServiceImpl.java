@@ -64,9 +64,10 @@ public class TradeSseEventServiceImpl implements TradeSseEventService {
 
             } else if (channel.startsWith(MATCH_PREFIX)) {
                 String pieceProductUuid = channel.substring(MATCH_PREFIX.length());
-                UpdateMarketPriceSseDto dto = deserializePayload(event.getBody(), UpdateMarketPriceSseDto.class);
+                MarketPriceSerializeDto serializeDto = deserializePayload(event.getBody(), MarketPriceSerializeDto.class);
+                System.out.println(serializeDto.getPiecePrice());
+                UpdateMarketPriceSseDto dto = UpdateMarketPriceSseDto.builder().marketPrice(serializeDto.getPiecePrice()).build();
                 emitToSink(matchedSinks, pieceProductUuid, dto, "[TradeSseEventService] 체결정보 SSE 송출");
-
             } else {
                 log.warn("[TradeSseEventService] 처리하지 않는 채널 수신: channel={}", channel);
             }
