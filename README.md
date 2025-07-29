@@ -38,13 +38,11 @@ Piece Service는 **실물자산 조각 거래**의 핵심 서비스로, 조각 �
 - **Spring Boot 3.5.0** - 최신 Spring Boot 프레임워크
 - **Spring WebFlux** - 반응형 웹 프레임워크
 - **Spring Data JPA** - ORM 및 데이터 접근 계층
-- **QueryDSL** - 타입 안전한 쿼리 작성
 
 ### Database & Cache
 - **MySQL 8.0** - 메인 데이터베이스
 - **Redis 7.0** - 분산 락 및 실시간 데이터 캐시
 - **Redisson** - Redis 분산 락 구현
-- **HikariCP** - 커넥션 풀 관리
 
 ### Message Queue & Streaming
 - **Apache Kafka** - 이벤트 기반 통신
@@ -63,7 +61,6 @@ Piece Service는 **실물자산 조각 거래**의 핵심 서비스로, 조각 �
 ## 🚀 주요 기능
 
 ### 1. 조각 생성 및 분배
-- **공모 완료 검증**: 완료된 공모만 조각화 가능
 - **조각 생성**: 총량에 따른 조각 생성
 - **자동 분배**: 공모 참여자에게 조각 분배
 
@@ -170,7 +167,7 @@ Kafka를 통한 이벤트 기반 통신으로 다른 서비스와 연동됩니�
 
 ## 📞 연락처
 
-- **프로젝트 홈페이지**: https://mobile.pieceofcake.site/
+- **프로젝트 홈페이지**: ~~https://mobile.pieceofcake.site/~~
 - **개발 기간**: 2025년 4월 30일 ~ 7월 10일
 
 ---
